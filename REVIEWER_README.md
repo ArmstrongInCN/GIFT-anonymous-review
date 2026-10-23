@@ -11,7 +11,7 @@ For a small bounded CPU example that does not require the full experiment data,
 see `reviewer_demo/README.md`. The independent demonstration is supplied in the
 same package; it is not a reproduction of the manuscript's full experiments.
 
-For the full project, follow `docs/SETUP.md`. Current protocols are documented in
+For the full project, follow `docs/SETUP.md`. Scoped source-package installation timings are recorded in `REVIEW_INSTALLATION.md`. Current protocols are documented in
 `docs/CURRENT_REPRODUCTION.md` (W1/W2), `docs/W3_REPRODUCTION.md` (W3),
 `docs/S3_PROTOCOL.md` and `docs/DATA_GENERATION.md`. Data fields are described in
 `docs/data_package/DATA_DICTIONARY.md`.
