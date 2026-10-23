@@ -21,10 +21,20 @@ https://www.scidb.cn/en/anonymous/YnVVUjNl . Set `GIFT_DATA_ROOT` to the extract
 dataset root containing `dataset.json`. This source snapshot does not contain the
 large archived dataset, generated result arrays or full trained model weights.
 
+## Per-case source data
+
+`source_data/Supplementary_Table_S5.csv` contains the complete W3 per-case results
+corresponding to Supplementary Table S5: 50 equation-parameter cases x 5
+identification methods x 3 parameters, giving 750 rows. The table includes the
+true parameter values, estimates, absolute percentage errors, status and neutral
+training-host groups. These are the archived results used in the manuscript,
+not a new experiment. All scientific fields are preserved; the host groups use
+the neutral labels `host_A` and `host_B` for review.
+
 ## Reference weights and full experiments
 
 This source-only review snapshot omits trained weights, generated training
-histories and result exports. Catalogue files retain architecture/protocol and
+histories and large result exports. Catalogue files retain architecture/protocol and
 checksum information for inspection. References in historical documentation to
 `results/`, training-cost receipts and completion records describe the separate
 scientific archive and are not claims that those generated files are bundled.

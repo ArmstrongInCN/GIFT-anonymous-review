@@ -1,8 +1,8 @@
 {
   "schema": "gift.anonymous-review-source.v1",
-  "scope": "Complete original Python source, source-only reproduction documentation/dependencies/configuration, retained licences and bounded independent CPU demonstration. Large generated data/results and full trained weights are separate.",
-  "file_count_excluding_this_manifest": 352,
-  "total_bytes_excluding_this_manifest": 14814569,
+  "scope": "Complete original Python source, source-only reproduction documentation/dependencies/configuration, retained licences, archived complete per-case Supplementary Table S5 and bounded independent CPU demonstration. Large generated data/results and full trained weights are separate.",
+  "file_count_excluding_this_manifest": 353,
+  "total_bytes_excluding_this_manifest": 14891663,
   "files": [
     {
       "path": ".gitattributes",
@@ -686,8 +686,8 @@
     },
     {
       "path": "REVIEWER_README.md",
-      "bytes": 3145,
-      "sha256": "3849ffa8cd2ecef14fdad73bbff252c800bc5f1e596be7d2e3b239bf4abac373"
+      "bytes": 3712,
+      "sha256": "1f19098de18eee370b1fd3e2e8af88454270457351f6cf87b73e16d8c14e0cd8"
     },
     {
       "path": "scripts/aggregate_w3_current.py",
@@ -963,6 +963,11 @@
       "path": "scripts/verify_results.py",
       "bytes": 6356,
       "sha256": "b2c2a015f16e822b244775a2a6558357686a0b13f3894f440727b35abbed9cfe"
+    },
+    {
+      "path": "source_data/Supplementary_Table_S5.csv",
+      "bytes": 76527,
+      "sha256": "383f6999daf1ec245f2a69525d4b5777374a03bfb89e60ee004932e995f19835"
     },
     {
       "path": "src/even_full_spectrum_ns.py",
