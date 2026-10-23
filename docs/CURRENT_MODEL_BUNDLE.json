@@ -1,0 +1,83 @@
+{
+  "model_count": 7,
+  "model_file_count": 9,
+  "training_observations_included": false,
+  "complete_training_resume_state_included": false,
+  "models": {
+    "GIFT": "models/GIFT/branch/model.pt",
+    "fno2d": "models/fno2d/terminal_weights.pt",
+    "fno3d": "models/fno3d/terminal_weights.pt",
+    "anie_ns": "models/anie_ns/best.pt",
+    "uno": "models/uno/terminal_weights.pt",
+    "unet": "models/unet/terminal_weights.pt",
+    "GIFT-N50": "models/GIFT-N50/branch/model.pt"
+  },
+  "status": "published_source_free",
+  "filename": "GIFT-current-models-20261020-source-free.zip",
+  "bytes": 265720625,
+  "sha256": "f18edee1cad3e5e0a99331878b83fb59094a84000c0b2fe3acd6f15a4abd7e7c",
+  "bundle_schema": "gift.current-model-bundle.v2",
+  "source_metadata_policy": "source-free-provenance-v1",
+  "bundle_manifest_sha256": "a7dbb4c91358e82177abfc289cd0cd4d9eeddf3b29ddc217dc56c4c8f2ce4951",
+  "download_url": "See REVIEWER_README.md: reference weights are not bundled in this source-only review snapshot.",
+  "release_url": "See REVIEWER_README.md: reference weights are not bundled in this source-only review snapshot.",
+  "model_files": [
+    {
+      "path": "models/anie_ns/best.pt",
+      "bytes": 6983013,
+      "sha256": "e0f39eeee053d1afae736f3471c625a4dc1c7200e93d993ddc85aeb24873a25d"
+    },
+    {
+      "path": "models/fno2d/terminal_weights.pt",
+      "bytes": 3724133,
+      "sha256": "6dc9197637184db3f7c412aa82d0630be8eafaa79054cf0401a876fd04ca3b05"
+    },
+    {
+      "path": "models/fno3d/terminal_weights.pt",
+      "bytes": 28746241,
+      "sha256": "286aeea4c54c6810a43ab572b66309c5c3db16fb9c8323286ad581d3968fc0a1"
+    },
+    {
+      "path": "models/GIFT/branch/model.pt",
+      "bytes": 11339602,
+      "sha256": "fe40059ce9863df79a31e6f3c16e890c577b277519e2fc0a234e4f7014cbf478"
+    },
+    {
+      "path": "models/GIFT/generator/model.pt",
+      "bytes": 298852,
+      "sha256": "a4489e094c1edd74cabc8ead557a7535ddcdbf45cb67f74aa164af86a3c66c31"
+    },
+    {
+      "path": "models/GIFT-N50/branch/model.pt",
+      "bytes": 11336850,
+      "sha256": "fe78259d166941e7cab84859669a0a508a0f580f19c7a2a908809d4adeb3ec93"
+    },
+    {
+      "path": "models/GIFT-N50/generator/model.pt",
+      "bytes": 296100,
+      "sha256": "4b4f95124604e43c6d880fa10dea48d997f576168321b0f9b2e7313ffed7400c"
+    },
+    {
+      "path": "models/unet/terminal_weights.pt",
+      "bytes": 99834735,
+      "sha256": "ee6918cba6991b904cd6ccaa6738dd992325ad8691ffce5919438e32307eb34c"
+    },
+    {
+      "path": "models/uno/terminal_weights.pt",
+      "bytes": 121928759,
+      "sha256": "75334c44d832fab4d5ef525af68c3848ed1392594e1c32885f3c539179919068"
+    }
+  ],
+  "tensor_values_unchanged": true,
+  "original_weight_files_modified": false,
+  "previous_published_archive": {
+    "filename": "GIFT-current-models-20261020.zip",
+    "sha256": "2b7d9d7c592a5cdeb35a24510350efa5e671abf8cc1f89dd59d82e9f5bfebf95",
+    "release_url": "See REVIEWER_README.md: reference weights are not bundled in this source-only review snapshot.",
+    "source_metadata_present": true,
+    "replacement_pending": false,
+    "superseded_by_release_url": "See REVIEWER_README.md: reference weights are not bundled in this source-only review snapshot.",
+    "superseded_by_download_url": "See REVIEWER_README.md: reference weights are not bundled in this source-only review snapshot.",
+    "retained_for_provenance": true
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "schema": "gift.cpu-api-smoke.v1",
+  "status": "passed",
+  "scope": "30 Adam updates on four supplied toy derivative fields; component amplitude responses; checkpoint reload; four-step RK4. No manuscript metric or full training protocol is reproduced.",
+  "environment": {
+    "python": "3.12.14",
+    "os": "Windows-11-10.0.26200-SP0",
+    "machine_architecture": "AMD64",
+    "torch": "2.10.0+cu126",
+    "numpy": "1.26.4",
+    "device": "cpu",
+    "torch_threads": 1,
+    "deterministic_algorithms": true
+  },
+  "configuration": {
+    "seed": 20261023,
+    "field_shape": [
+      4,
+      8,
+      8
+    ],
+    "updates": 30,
+    "adam_learning_rate": 0.02,
+    "generator": {
+      "cutoff": 1,
+      "rank": 1,
+      "state_scale": 1.0,
+      "conserve_spatial_mean": false
+    },
+    "rk4_dt": 0.01,
+    "rk4_steps": 4
+  },
+  "initial_mse": 0.017765335738658905,
+  "final_mse": 2.2997093765297905e-05,
+  "component_homogeneity_max_abs_errors": {
+    "constant": 0.0,
+    "linear": 0.0,
+    "quadratic": 0.0
+  },
+  "checkpoint_reload_prediction_bitwise_equal": true,
+  "trajectory_shape": [
+    5,
+    8,
+    8
+  ],
+  "all_outputs_finite": true,
+  "seconds_including_imports_to_summary": 2.4961932000005618,
+  "input_sha256": "7b6ac47bce4a1b249ff49c5a0c8efe3f406667a87a998408eae731504f6ad579",
+  "output_files": {
+    "smoke_model.pt": {
+      "bytes": 3857,
+      "sha256": "cab39ef17010e0cb5e1834e8952fcb249a15cd29a023b4d51d1cb818db86cc25"
+    },
+    "smoke_arrays.npz": {
+      "bytes": 3322,
+      "sha256": "ce3eff581329c86a977bdf97fbc7925b63e89b2608465e8eaa8d76bd205aacda"
+    }
+  }
+}

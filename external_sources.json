@@ -1,0 +1,109 @@
+{
+  "schema": "gift.external-sources.v1",
+  "policy": "External source is not distributed in this repository. Readers obtain it from the upstream owner and comply with its terms. Hashes identify source bytes, not a license grant.",
+  "sources": {
+    "fno": {
+      "repository": "https://github.com/neuraloperator/neuraloperator",
+      "commit": "01d2aeca407f85ce1c1e78b313edb749973fc051",
+      "directory": "fno",
+      "license_status": "consult_upstream_at_pinned_commit",
+      "files": {
+        "fourier_2d_time.py": {
+          "sha256": "481617EF6C3280413F78D608593241EA4EE9D07CF93E30D657D0F3E68436E0B0"
+        },
+        "fourier_3d.py": {
+          "sha256": "E6F8875D319C9E6708B7C449F0BB9C63581446EB26E941FDC06C0979DF650A96"
+        },
+        "utilities3.py": {
+          "sha256": "113B9BA3A10A3E951F7A3479FCE9A8B10D52AD4DED6FB95C6B03BCF94F810A13"
+        }
+      }
+    },
+    "uno": {
+      "repository": "https://github.com/ashiq24/UNO",
+      "commit": "19462d82729ef64ef7b9e97056ddcaaf3044ad47",
+      "directory": "uno",
+      "license": "BSD-2-Clause",
+      "files": {
+        "navier_stokes_uno2d.py": {
+          "sha256": "B66DC6C8215E33D72D31B1DFA29AD041558C967DB77B78A2721D96B02D8B1876"
+        },
+        "integral_operators.py": {
+          "sha256": "89E5F51D7FC5C5FA1FBE5357C0E2D770B717053B6E25E93F4F2EAF9B04D2DB52"
+        },
+        "Adam.py": {
+          "sha256": "8F2FD03BF320C32D6D08CE9627845EE8048D34489B967BD6E86A66445330F1BA"
+        },
+        "utilities3.py": {
+          "sha256": "AD92FB260F6D565AD71BB25597A7C7012F06ED6ECB3948D59D1D146E78EE1395"
+        },
+        "ns_train_2d.py": {
+          "sha256": "77B905CFB0090E942ACEBF1446395B18AB02015863C875F658520D4627FB8879"
+        },
+        "ns_uno2d_main.py": {
+          "sha256": "15DAC20BC540A5E466649B89ACE9D416634DC274735CA78BC79D42E9C29E6CA1"
+        },
+        "LICENSE": {
+          "sha256": "AB4DD081D7897CD3A440A90A500F872F4B54475C071F7B761B283B0D5475FE9A"
+        }
+      }
+    },
+    "pinn_sr": {
+      "repository": "https://github.com/isds-neu/EQDiscovery",
+      "commit": "9a20ebe6783e00bc53e3cdd1fd7ff07d2170f496",
+      "directory": "pinn_sr",
+      "license": null,
+      "redistribution_permission": "not_identified",
+      "files": {
+        "Examples/Discovery with Single Dataset/Vorticity/NS_Vorticity_UniformSetting_OneAdam_PreADOPt.py": {
+          "bytes": 50004,
+          "sha256": "C5AE04D1C9E220B912C5D0ABD89D03216B85649C08236F5B9A861F98198BA261"
+        }
+      }
+    },
+    "tensorflow115": {
+      "repository": "https://github.com/tensorflow/tensorflow",
+      "tag": "v1.15.0",
+      "commit": "590d6eef7e91a6a7392c8ffffb7b58f2e0c8bc6b",
+      "directory": "tensorflow115",
+      "license": "Apache-2.0",
+      "files": {
+        "tensorflow/contrib/opt/python/training/nadam_optimizer.py": {
+          "bytes": 4249,
+          "sha256": "53F27B08755B11945E93045680FEEB2786DD7BD27078CDADDB4476F34475155E",
+          "git_blob_sha1": "960826407b66b4efa3c2693efb6d2e17c4b47b33"
+        },
+        "tensorflow/contrib/opt/python/training/external_optimizer.py": {
+          "bytes": 16646,
+          "sha256": "38CE5DA0E31982FAAF86F5795027B9D2D3FB140D5D074FDB077F470FC002BA0B",
+          "git_blob_sha1": "814f980c7917de0e255f844de1ded04a97eac1b3"
+        }
+      }
+    },
+    "pde_find": {
+      "repository": "https://github.com/snagcliffs/PDE-FIND",
+      "commit": "86911349b9fac82996e35465a13d06205730cc05",
+      "directory": "pde_find",
+      "license": null,
+      "redistribution_permission": "not_identified",
+      "files": {
+        "PDE_FIND.py": {
+          "bytes": 26043,
+          "sha256": "79D05AEE89900F57A1E2EE91040C09C55B953DAE0C8BF4AAF1CED61DF6B66E2A"
+        }
+      }
+    },
+    "unet": {
+      "repository": "https://github.com/Rui1521/Turbulent-Flow-Nets",
+      "commit": "229da3e01acefa6f4dd6c77244da5015c9b965af",
+      "directory": "unet",
+      "license": null,
+      "license_status": "not_declared_at_pinned_commit_do_not_redistribute",
+      "files": {
+        "Baselines/U-net.py": {
+          "sha256": "F7390A41DA24DD8DBC45F80D04ABEA81F4AAC8FFF14C4BCDC982A9EBDF59B237"
+        }
+      }
+    }
+  }
+}

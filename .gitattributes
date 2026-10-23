@@ -1,0 +1,15 @@
+* -text
+# Preserve this review snapshot byte-for-byte, including integrity manifests.
+
+# Archived measurements and weights retain their original bytes.
+results/** -text
+artifacts/** -text
+*.h5 -text
+*.hdf5 -text
+*.npz -text
+*.pt -text
+*.pth -text
+*.part -text
+*.png -text
+*.jpg -text
+*.pdf -text

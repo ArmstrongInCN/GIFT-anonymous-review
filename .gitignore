@@ -1,0 +1,26 @@
+# Keep downloaded data, upstream implementations and run products out of Git.
+/data/
+/external/
+/vendor/
+/third_party/
+/runs/
+/work/
+/build/
+/dist/
+/tmp/
+/external-adapters/
+/external_runtime/
+/gift-external-runtime/
+# Local assistant/work notes are development diaries, not part of the delivery.
+/.workbuddy/
+.env
+.env.*
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.test_tmp/
+.venv/
+*.h5
+*.hdf5

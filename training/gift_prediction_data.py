@@ -1,0 +1,145 @@
+"""Observed-state sampling for full-data GIFT prediction training.
+
+One epoch is one sampled window for each trajectory, visited once. No analytic
+PDE derivatives, physical coefficients, test arrays or published weights are
+read. State derivatives use the existing fourth-order observation stencil.
+"""
+
+from __future__ import annotations
+
+import hashlib
+from pathlib import Path
+
+import h5py
+import numpy as np
+import torch
+
+from gift.data_splits import canonical_ids
+
+# Fixed physical time step; rollout windows sample these frame offsets (in DT
+# units) from each sampled anchor, up to 50 steps of trajectory.
+DT = 0.02
+ROLLOUT_OFFSETS = np.asarray((0, 5, 10, 20, 25, 30, 40, 50), dtype=np.int64)
+
+
+def epoch_indices(population: int, frames: int, seed: int, epoch: int, *, rollout=False):
+    """Return a full trajectory permutation and row-indexed observation locations.
+
+    Derivative centres leave two frames on each side for the five-point
+    stencil. Rollout anchors leave fifty DT steps ahead. Independent seed,
+    epoch and rollout streams avoid coupling this sampler to global RNG.
+    """
+    if population < 1 or frames < (51 if rollout else 5) or epoch < 0:
+        raise ValueError("invalid epoch sampling dimensions")
+    # A distinct RNG stream per (seed, epoch, rollout) gives every epoch an
+    # independent, reproducible trajectory ordering without shared state.
+    rng = np.random.default_rng(np.random.SeedSequence([seed, epoch, int(rollout)]))
+    order = rng.permutation(population)
+    centres = (rng.integers(0, frames - 50, population, dtype=np.int64) if rollout
+               else rng.integers(2, frames - 2, population, dtype=np.int64))
+    return order, centres
+
+
+def observed_pairs(raw: np.ndarray, order: np.ndarray, centres: np.ndarray):
+    """Return CPU float32 state/RHS tensors [B,y,x] from a five-frame observation stencil.
+
+    centres is indexed by original trajectory row, while order chooses batch
+    order. The fourth-order centred derivative divides by 12*DT; targets
+    therefore have vorticity-per-second units and use no analytic PDE labels.
+    """
+    rows, times = order, centres[order]
+    state = np.ascontiguousarray(raw[rows, times], dtype=np.float32)
+    # Fourth-order central difference of vorticity over five frames gives the
+    # time derivative that the generator must learn to reproduce.
+    target = (raw[rows, times - 2] - 8.0 * raw[rows, times - 1]
+              + 8.0 * raw[rows, times + 1] - raw[rows, times + 2]) / (12.0 * DT)
+    return torch.from_numpy(state), torch.from_numpy(np.ascontiguousarray(target))
+
+
+def observed_sequences(raw: np.ndarray, order: np.ndarray, anchors: np.ndarray):
+    """Gather [B,8,y,x] float32 rollout frames at offsets up to 50 DT steps.
+
+    anchors is indexed by trajectory row. The eight offsets are physical
+    observation locations, not eight consecutive integration steps.
+    """
+    times = anchors[order, None] + ROLLOUT_OFFSETS[None]
+    return np.ascontiguousarray(raw[order[:, None], times], dtype=np.float32)
+
+
+class ObservationBank:
+    """Load only train/validation observed vorticity, with scientific identity."""
+
+    def __init__(self, path: Path, *, fixture: bool = False):
+        """Load train/validation observations and fit a training-only RMS state scale.
+
+        Fields have axes (trajectory, frame, y, x), square grids and DT=0.02
+        seconds. Translate released storage IDs when appropriate, keep other IDs
+        as supplied, and fingerprint decoded data while checking finite values.
+        Test trajectories are never read or used for scaling.
+        """
+        path = Path(path).resolve(strict=True)
+        self.binding = {"file": path.name, "sha256": None,
+                        "bytes": path.stat().st_size, "fixture_only": fixture}
+        scientific = hashlib.sha256()
+        with h5py.File(path, "r") as handle:
+            self.binding["fixture_only"] = bool(handle.attrs.get("fixture_only", False))
+            canonical = handle.attrs.get("trajectory_id_scheme") == "canonical"
+            for group in ("training", "validation"):
+                ids = tuple(map(int, handle[f"{group}/trajectory_index"][:]))
+                # Older released containers use the historical storage lookup.
+                # Other datasets retain their own IDs instead of needing a
+                # membership certificate in that published population.
+                legacy = all(0 <= value < 70 or 1000 <= value < 2150 for value in ids)
+                public = canonical_ids(ids) if not canonical and legacy else ids
+                # Observed vorticity is (trajectory, frame, 64, 64); time must be
+                # an exact multiple of DT so frames map to physical steps.
+                raw = handle[f"{group}/vorticity"]
+                times = np.asarray(handle[f"{group}/time"][:], dtype=np.float64)
+                if (raw.ndim != 4 or raw.shape[-1] != raw.shape[-2]
+                        or raw.dtype != np.dtype("float32") or len(public) != raw.shape[0]
+                        or len(set(public)) != len(public) or len(times) != raw.shape[1] or len(times) < 51
+                        or not np.allclose(times, np.arange(len(times)) * DT, rtol=0, atol=2e-12)):
+                    raise ValueError(f"invalid observed {group} schema")
+                value = np.empty(raw.shape, dtype=np.float32)
+                scientific.update(group.encode("ascii"))
+                scientific.update(np.asarray(public, dtype="<i8").tobytes())
+                scientific.update(times.astype("<f8").tobytes())
+                square_sum = 0.0
+                for row in range(len(public)):
+                    value[row] = raw[row]
+                    if not np.isfinite(value[row]).all():
+                        raise ValueError(f"nonfinite observed {group} trajectory {public[row]}")
+                    scientific.update(value[row].tobytes())
+                    square_sum += float(np.square(value[row], dtype=np.float64).sum())
+                setattr(self, group, value)
+                self.binding[group + "_ids"] = list(public)
+                if group == "training":
+                    # RMS vorticity over training trajectories normalizes the
+                    # generator's input and output scales.
+                    self.state_scale = float(np.sqrt(square_sum / value.size))
+        if set(self.binding["training_ids"]) & set(self.binding["validation_ids"]):
+            raise ValueError("training/validation identity overlap")
+        if not np.isfinite(self.state_scale) or self.state_scale <= 0:
+            raise ValueError("invalid training-only state scale")
+        self.binding["observations_sha256"] = scientific.hexdigest()
+        self.binding["time_step"] = DT
+
+    def pairs(self, seed: int, epoch: int, *, validation=False):
+        """Sample one state/observed-derivative pair per trajectory for this epoch.
+
+        Return float32 Torch tensors on CPU. validation selects the independent
+        validation population; seed and epoch determine order and stencil centres.
+        """
+        raw = self.validation if validation else self.training
+        order, centres = epoch_indices(len(raw), raw.shape[1], seed, epoch)
+        return observed_pairs(raw, order, centres)
+
+    def sequences(self, seed: int, epoch: int, *, validation=False):
+        """Sample one eight-frame rollout sequence per trajectory for this epoch.
+
+        Return a contiguous NumPy array [trajectory,8,y,x]. validation changes
+        the source population without changing the offset convention.
+        """
+        raw = self.validation if validation else self.training
+        order, anchors = epoch_indices(len(raw), raw.shape[1], seed, epoch, rollout=True)
+        return observed_sequences(raw, order, anchors)

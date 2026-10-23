@@ -1,0 +1,4 @@
+# Tested with Python 3.12.14. The measured PyTorch build was 2.10.0+cu126,
+# used only on CPU. No fresh dependency installation was timed for this demo.
+numpy==1.26.4
+torch==2.10.0

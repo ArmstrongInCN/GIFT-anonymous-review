@@ -1,0 +1,29 @@
+{
+  "scope": "Four original GIFT numerical API modules and their original MIT license. File hashes identify the anonymous supplied source snapshot; the demo driver is separate and intentionally bounded.",
+  "files": {
+    "src/gift/__init__.py": {
+      "bytes": 1401,
+      "sha256": "29043e081322b9039e9a2d3da42f29970d49c8f26a36ed0e63b6b583f46e299d"
+    },
+    "src/gift/model.py": {
+      "bytes": 11148,
+      "sha256": "2ae1a3163f4159dab26a80780e7a3fafe3016cd9bfb3d21364670c9b4310c9f5"
+    },
+    "src/gift/identified.py": {
+      "bytes": 7374,
+      "sha256": "14c47ebabea033beb23a8e0db768fb0673fc31078a323827876f6e56aa65c976"
+    },
+    "src/gift/identifiability.py": {
+      "bytes": 12656,
+      "sha256": "e1dbf12150ad6937da7f2a5801fd2326ee09b8fe25a2e4950f95c35d81dd1e15"
+    },
+    "LICENSE": {
+      "bytes": 1074,
+      "sha256": "5abab89d784450e032eaa93c7a6588a60c2e3f5d1460a94eecd36c3558c24765"
+    },
+    "demo_data.npz": {
+      "bytes": 2574,
+      "sha256": "7b6ac47bce4a1b249ff49c5a0c8efe3f406667a87a998408eae731504f6ad579"
+    }
+  }
+}

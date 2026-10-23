@@ -1,0 +1,54 @@
+"""Catalog binding for lossless model parts, with no Git or training invocation."""
+import json
+
+import pytest
+import torch
+
+from scripts import audit_repository as audit
+from training.weight_files import read_index, split_weights
+
+
+def package(tmp_path, monkeypatch):
+    """Create a small split-weight bundle and bind each part to its catalog index.
+
+    The saved tensor is synthetic; only catalog membership and index links
+    are tested, without loading a trained model or invoking Git.
+    """
+    source = tmp_path / "source.pt"
+    torch.save({"status": "complete", "model_state_dict": {"x": torch.ones(16)}}, source)
+    root = tmp_path / "project"
+    index_path = split_weights(source, root / "artifacts/uno", part_bytes=512)
+    index = read_index(index_path)
+    relative = "artifacts/uno/weights.json"
+    records = [{"path": relative, "artifact_role": "trained_weights_index",
+                "bytes": index_path.stat().st_size, "sha256": audit.digest(index_path)}]
+    for part in index["parts"]:
+        records.append({**part, "path": "artifacts/uno/" + part["path"],
+                        "artifact_role": "trained_weights_part", "checkpoint_index": relative})
+    catalog = root / "artifacts/CHECKPOINTS.json"
+    catalog.write_text(json.dumps({"files": records}))
+    monkeypatch.setattr(audit, "ROOT", root)
+    return catalog, records
+
+
+def test_complete_part_catalog(tmp_path, monkeypatch):
+    """Allow exactly the index and part paths declared by a consistent catalog."""
+    _, records = package(tmp_path, monkeypatch)
+    # The allowlist must list exactly the files the catalog declares; a missing
+    # or orphaned part is rejected by the inconsistent-catalog test below.
+    assert set(audit.numeric_checkpoint_allowlist()) == {r["path"] for r in records}
+
+
+@pytest.mark.parametrize("change", ["missing_part", "wrong_binding", "orphan_part"])
+def test_inconsistent_part_catalog(tmp_path, monkeypatch, change):
+    """Reject missing parts, wrong index links and parts with no catalogued index."""
+    catalog, records = package(tmp_path, monkeypatch)
+    if change == "missing_part":
+        records.pop()
+    elif change == "wrong_binding":
+        records[1]["checkpoint_index"] = "wrong.json"
+    else:
+        records = records[1:]
+    catalog.write_text(json.dumps({"files": records}))
+    with pytest.raises(ValueError):
+        audit.numeric_checkpoint_allowlist()
