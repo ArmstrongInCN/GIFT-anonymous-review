@@ -100,7 +100,7 @@ def test_only_four_fixed_runs_no_development_or_seed_loops(tmp_path, monkeypatch
     assert trained == plan["methods"] and evaluated == ["confirmation", "old_test"]
     assert json.loads((tmp_path / "ORCHESTRATOR.json").read_text())["formal_runs"] == 4
     text = (tmp_path / "RESULTS.md").read_text(encoding="utf-8")
-    assert ".08/.48" in text and "无跨seed均值/SD" in text
+    assert ".08/.48" in text and "without cross-seed means/SDs" in text
 
 
 def test_scientific_failure_retained_and_infrastructure_blocks(tmp_path):

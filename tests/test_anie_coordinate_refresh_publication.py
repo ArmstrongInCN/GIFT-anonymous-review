@@ -113,7 +113,7 @@ def test_document_numbers_replaced_from_new_measurements_without_changing_w2(tmp
 | ANIE | 20810.388 | 5.7807 |
 | 64 | ANIE | 300 | 7 | .9 | .9 | 15 | 0/180 |
 | 64 | ANIE | 300 | 7 | .9 | .9 | 15 | 0/180 |
-ANIE使用全76点的MSE。
+ANIE uses MSE over all 76 points.
 W1_native_single76_n300_original_style_20261005
 W2_native_single76_n300_original_style_20261005
 """
@@ -133,8 +133,8 @@ W2_native_single76_n300_original_style_20261005
     assert publication.PACKAGE_NAME in content
     assert "space-major/time-minor" in content
     implementation = contents["docs/ANIE_ADAPTATION.md"][1]
-    assert "允许新对齐profile通过配置校验并按该profile构造原网络" in implementation
-    assert "训练代码未改" not in implementation
+    assert "Allow the new aligned profile through configuration validation and construct the original network using that profile" in implementation
+    assert "Training code was not changed" not in implementation
 
 
 def curve_report(offset):
@@ -151,11 +151,11 @@ def test_both_cohort_tables_use_actual_nodes_and_are_idempotent():
     cells = old_lines[2].split("|")
     cells[7] = " 9.999999 "
     old_lines[2] = "|".join(cells)
-    before = "\n".join(old_lines) + "\n\n#### 探索性测试集\n\n" + publication.measured_curve_table(reports["old_test"]) + "\n\nW2 unchanged text.\n"
+    before = "\n".join(old_lines) + "\n\n#### Exploratory test set\n\n" + publication.measured_curve_table(reports["old_test"]) + "\n\nW2 unchanged text.\n"
     after = publication.refresh_curve_tables(before, reports)
     assert expected_confirmation in after
     assert publication.measured_curve_table(reports["old_test"]) in after
-    assert after.count("| 时间 | GIFT | GIFT-N50") == 2
+    assert after.count("| Time | GIFT | GIFT-Lite") == 2
     assert "9.999999" not in after
     assert "W2 unchanged text." in after
     assert publication.refresh_curve_tables(after, reports) == after
@@ -163,26 +163,26 @@ def test_both_cohort_tables_use_actual_nodes_and_are_idempotent():
 
 def test_one_existing_curve_table_does_not_add_exploration_record_structure():
     reports = dict(confirmation=curve_report(0), old_test=curve_report(.01))
-    before = publication.measured_curve_table(reports["confirmation"]) + "\n\n#### 探索性测试集\n\nExisting summary and figure links.\n"
+    before = publication.measured_curve_table(reports["confirmation"]) + "\n\n#### Exploratory test set\n\nExisting summary and figure links.\n"
     after = publication.refresh_curve_tables(before, reports)
     assert after == before
-    assert after.count("| 时间 | GIFT | GIFT-N50") == 1
+    assert after.count("| Time | GIFT | GIFT-Lite") == 1
 
 
 def test_failed_curve_slot_has_no_fabricated_numeric_means():
     report = curve_report(0)
     report["methods"]["anie_ns"]["summary"] = dict(failed_count=180, metrics={})
     table = publication.measured_curve_table(report)
-    assert table.count("无总体值") == 7
+    assert table.count("no aggregate value") == 7
 
 
 def test_coordinate_and_exposure_wording_has_no_development_labels():
-    text = "原生token坐标与76个查询点；既有四方法结果在扩展前已知，故不是本次新盲确认\n- v6：source\n"
+    text = "native token coordinates and 76 query points; results for the four existing methods were known before the extension, so this is not a new blind confirmation\n- v6: source\n"
     result = publication.reconcile_record_wording("docs/RESULTS.md", text)
-    assert "原生token坐标" not in result
-    assert "四方法" not in result
-    assert "- v6：" not in result
-    assert "非盲测的事后测量" in result
+    assert "native token coordinates" not in result
+    assert "four existing methods" not in result
+    assert "- v6: " not in result
+    assert "non-blind post hoc measurement" in result
 
 
 def test_document_consumers_only_reference_existing_canonical_documents():

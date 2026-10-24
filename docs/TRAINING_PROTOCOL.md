@@ -1,37 +1,37 @@
-# Training protocol / 训练协议
+# Training protocol
 
-## W1/W2 固定训练协议
+## W1/W2 fixed training protocol
 
-[N300/76点协议](W1_W2_PROTOCOL.md) 使用有序固定N300训练名单、20条验证轨迹、t5–8每0.04秒76个真实节点和单一真实t5初态。GIFT-Lite取同一名单前50条。各方法采用固定超参数与声明种子，每方法一个训练实例。W1包括GIFT、GIFT-Lite、FNO-2D、FNO-3D、U-NO、U-Net、ANIE；W2除ANIE外包括六方法。
+The [N300/76-point protocol](W1_W2_PROTOCOL.md) uses a fixed ordered N300 training list, 20 validation trajectories, 76 genuine observation nodes at 0.04-second intervals over t5–8 and a single true t5 initial state. GIFT-Lite uses the first 50 trajectories in the same list. Each method uses fixed hyperparameters and declared seeds, with one training instance per method. W1 includes GIFT, GIFT-Lite, FNO-2D, FNO-3D, U-NO, U-Net and ANIE; W2 includes the six methods other than ANIE.
 
-| 方法 | 配方与模型选择 | 实际监督范围 |
+| Method | Recipe and model selection | Actual supervision coverage |
 | --- | --- | --- |
-| FNO-2D | seed0，batch20，500epoch，Adam lr0.001/wd1e-4，StepLR100×0.5；epoch500终态 | 闭环课程[1,2,5,10,25,50,75]，前六阶段各20轮，从第121轮起完整75步。 |
-| FNO-3D | seed0，batch10，500epoch，同FNO-2D optimizer/scheduler；epoch500终态 | 一次联合输出未来75点，时空relative L2 batch-sum。 |
-| U-NO | seed0，batch16，保留尾12条，500epoch，Adam lr0.001/wd1e-5，StepLR100×0.5；epoch500终态 | t5闭环20步，训练目标至t5.80，batch/time-sum relative L2。 |
-| U-Net | seed0，batch20，500epoch，Adam lr0.001/wd1e-4，StepLR100×0.5；epoch500终态 | t5闭环4步，训练目标至t5.16，batch/time-sum relative L2。 |
-| ANIE | seed7，effective batch32/micro6，Adam lr1e-4/wd1e-4，延迟CosineT101，上限5000轮；第29轮validation-MSE-best，依patience1000规则在1029轮终止 | 官方NS训练c=0/y_init路径，原单位全76点MSE，含初态重建；仅W1。 |
-| GIFT / GIFT-Lite | generator seed2026072301、branch seed20260820；generator250+250，branch400/50/25/25；原阶段AdamW和日程，500轮终态 | coarse FD及局部RK4；监督时距0.08/0.48秒。 |
+| FNO-2D | seed0, batch20, 500 epochs, Adam lr0.001/wd1e-4, StepLR100×0.5; terminal epoch500 state | Closed-loop curriculum [1, 2, 5, 10, 25, 50, 75], 20 epochs for each of the first six stages, and all 75 steps from epoch121 onward. |
+| FNO-3D | seed0, batch10, 500 epochs, the same optimizer/scheduler as FNO-2D; terminal epoch500 state | Jointly outputs 75 future points in one call, with batch-summed spatiotemporal relative L2. |
+| U-NO | seed0, batch16, retains the final 12 trajectories, 500 epochs, Adam lr0.001/wd1e-5, StepLR100×0.5; terminal epoch500 state | 20 closed-loop steps from t5, targets through t5.80, batch/time-summed relative L2. |
+| U-Net | seed0, batch20, 500 epochs, Adam lr0.001/wd1e-4, StepLR100×0.5; terminal epoch500 state | 4 closed-loop steps from t5, targets through t5.16, batch/time-summed relative L2. |
+| ANIE | seed7, effective batch32/micro6, Adam lr1e-4/wd1e-4, delayed CosineT101, cap of 5000 epochs; validation-MSE-best at epoch29, stopping at epoch1029 under patience1000 | Official NS training c=0/y_init path, MSE in original units over all 76 points, including initial-state reconstruction; W1 only. |
+| GIFT / GIFT-Lite | generator seed2026072301, branch seed20260820; generator 250+250, branch 400/50/25/25; original stage-specific AdamW and schedules, terminal 500-epoch states | Coarse FD and local RK4; supervision lags of 0.08/0.48 seconds. |
 
-GIFT内部RK4 dt = 0.02，每0.04秒保存；W1推进150个内部步。N300生成元/分支更新9500/13600，GIFT-Lite为2000/2600；相同阶段epoch不代表相同计算预算。W1/W2的GIFT-Lite来源键为`GIFT-N50`；辅助实验中的同名50样本模型属于独立N1000协议，使用单独日程和validation-best，不能互换权重。监督范围、loss及预算差异是实验条件，不能把表现差异单独归因于架构。网络与控制器来源见 [原生实现说明](W1_W2_PROTOCOL.md)。
+GIFT uses internal RK4 dt = 0.02, saving every 0.04 seconds; W1 advances 150 internal steps. N300 generator/branch update counts are 9500/13600, versus 2000/2600 for GIFT-Lite; identical stage epoch counts do not imply identical computational budgets. The W1/W2 GIFT-Lite source key is `GIFT-N50`; the auxiliary experiment's 50-sample model with the same name belongs to the independent N1000 protocol, with a separate schedule and validation-best selection, and its weights are not interchangeable. Differences in supervision coverage, loss and budget are experimental conditions, so performance differences cannot be attributed solely to architecture. See the [native implementation description](W1_W2_PROTOCOL.md) for network and controller sources.
 
-确认IDs100000–100179与训练、验证独立，但两个评价人口的成绩已被查看，因此不是全部方法的盲测；探索IDs1040–1219另表报告。模型路径和SHA见 [CHECKPOINTS.md](CHECKPOINTS.md)，进程计时见 [PERFORMANCE.md](PERFORMANCE.md)。其余方法配置来源为 `prediction_extension/EXTENSION_LOCK.json`。
+Confirmation IDs100000–100179 are independent of training and validation, but scores for the two evaluation populations have already been inspected, so this is not a blind evaluation of every method; exploratory IDs1040–1219 are reported separately. Model paths and SHAs are in [CHECKPOINTS.md](CHECKPOINTS.md), and process timings are in [PERFORMANCE.md](PERFORMANCE.md). Configuration sources for the other methods are `prediction_extension/EXTENSION_LOCK.json`.
 
-W3采用独立单轨迹参数识别协议；S1–S3采用下列N1000及GIFT-Lite辅助协议，其模型和统计范围分别声明。
+W3 uses a separate single-trajectory parameter-identification protocol; S1–S3 use the N1000 and GIFT-Lite auxiliary protocols below, with their model and statistical scopes declared separately.
 
-ANIE坐标和训练配置来源为 `prediction_aligned/PROTOCOL_LOCK.json`，具体源码适配见 [ANIE实现说明](ANIE_ADAPTATION.md)。
+ANIE coordinate and training configuration sources are `prediction_aligned/PROTOCOL_LOCK.json`; source adaptations are detailed in the [ANIE implementation notes](ANIE_ADAPTATION.md).
 
 
-## 独立辅助训练协议（N1000/46帧/0.02秒）
+## Independent auxiliary training protocol (N1000/46 frames/0.02 seconds)
 
 The four supervised prediction baselines use the same 1,000 training trajectories,
 46-frame input history and **500 epochs**. Each epoch visits each trajectory once
 and selects one reproducibly seeded training window per trajectory. Use the final
 epoch, not test performance, to select the released baseline checkpoint.
 
-四个同类预测网络使用相同的 1,000 条训练轨迹、46 帧输入历史和 500 epoch。
-每个 epoch 将全部训练轨迹各访问一次，并以固定种子选择时间窗口。
-各模型保持自己的预测方式和损失计算，不将相同 epoch 宣称为相同参数更新次数或计算量。
+The four comparable prediction networks use the same 1,000 training trajectories, 46-frame input history and 500 epochs.
+Each epoch visits every training trajectory once and selects a time window with a fixed seed.
+Each model retains its own prediction procedure and loss computation; equal epoch counts are not claimed to imply equal parameter-update counts or computation.
 
 | Model | Epochs | Physical batch | Gradient accumulation | Expected parameter updates | Training prediction steps |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -46,7 +46,7 @@ dropped. All four schedulers advance once per epoch (StepLR: 100 epochs, factor
 0.0001 for the other three. Test trajectories are never used for updates,
 normalization, scheduling or checkpoint selection.
 
-## N1000 GIFT and GIFT-Lite training / 辅助模型训练
+## N1000 GIFT and GIFT-Lite auxiliary model training
 
 Two training regimes share the same GIFT architecture. **GIFT** uses all 1,000
 prediction-training trajectories; its generator and high-frequency branch each
@@ -57,10 +57,10 @@ training data, not a smaller network. W3 identification keeps its separate
 protocol below: its generator is trained on, and its coefficients are read from,
 the single local training trajectory 0 that the four baselines also use.
 
-GIFT 的生成元与高频支路各训练 500 epoch，分项报告。每个 epoch 对
-全部 1,000 条训练轨迹各访问一次，从每条轨迹选择一个固定种子控制的时间窗口。
-GIFT-Lite 使用 50 条训练轨迹、20 条验证轨迹及验证选模方式；网络结构不缩小。
-两者的训练预算也不同，因此不能把性能差异仅归因于训练数据数量。
+GIFT's generator and high-frequency branch are each trained for 500 epochs and reported separately. Each epoch
+visits all 1,000 training trajectories once and selects a reproducibly seeded time window from each.
+GIFT-Lite uses 50 training trajectories, 20 validation trajectories and validation-based model selection, with no reduction in network size.
+Their training budgets also differ, so performance differences cannot be attributed solely to the number of training trajectories.
 
 ### Data and model selection
 
@@ -158,15 +158,15 @@ measured times from each completed run; do not substitute estimated timings.
 
 ## Independent runs, timing and continuation
 
-### W3 无噪声50组参数训练协议
+### W3 training protocol for 50 noiseless parameter cases
 
-W3在固定的50组参数组合上逐组运行。每个case使用与其真实参数相对应的一条局部ID0轨迹、N64、t=0–10、501帧、保存间隔0.02、内部步长0.005；无测量噪声、无验证轨迹、不同case不复用轨迹。参数由锁定LHS生成，ν∈[0.0075,0.015]对数均匀，β和γ∈[0.75,1.25]线性，seed2026100901。完整CSV SHA及case逐项真值见[结果包](../results/formal/W3_single_trajectory_20261010/)。
+W3 runs separately on 50 fixed parameter combinations. Each case uses one local ID0 trajectory generated under its true parameters: N64, t=0–10, 501 frames, output interval 0.02 and internal step 0.005. There is no measurement noise or validation trajectory, and trajectories are not reused across cases. Parameters are generated by a locked LHS design: ν∈[0.0075, 0.015] is log-uniform, β and γ∈[0.75, 1.25] are linear, with seed2026100901. The complete CSV SHA and case-specific true values are in the [result package](../results/formal/W3_single_trajectory_20261010/).
 
-GIFT每case独立训练，seed2026072301、batch16、6000+6000随机小批更新、lr0.01/0.003、P21/rank8。每阶段固定采用第6000步终态checkpoint，训练内监控不选模型。每case独立执行最终affine fit和参数读出；预算为每case12000次更新。
+GIFT is trained independently for each case with seed2026072301, batch16, 6000+6000 random-minibatch updates, lr0.01/0.003 and P21/rank8. Each stage uses its fixed terminal checkpoint at step 6000; within-training monitoring does not select a model. The final affine fit and parameter readout are performed independently for every case; the budget is 12000 updates per case.
 
-PDE-FIND和PDE-FIND-KC使用各case本身的ID0轨迹、原局部多项式导数、open90/known4项库、STRidge与seed0；无SVD去噪。PINN-SR和PINN-SR-KC分别使用open90/known4库、seed1234、`paper_ado_v1`、native FP32且TF32关闭。每case固定24,000训练标签、6,000同轨迹留出标签和84,000物理点；预算为5,000次联合NAdam、一次原生SciPy L-BFGS、六轮每轮1,000次网络NAdam及最后20,000次联合NAdam，固定终态。SciPy参数上限与逐例实测停止状态见结果包，达到上限不代表收敛。
+PDE-FIND and PDE-FIND-KC use each case's own ID0 trajectory, the original local-polynomial derivatives, the open90/known4 libraries, STRidge and seed0, without SVD denoising. PINN-SR and PINN-SR-KC respectively use the open90/known4 libraries, seed1234, `paper_ado_v1` and native FP32 with TF32 disabled. Each case has 24,000 training labels, 6,000 held-out labels from the same trajectory and 84,000 physics points. Its budget is 5,000 joint NAdam updates, one native SciPy L-BFGS call, six rounds of 1,000 network NAdam updates and a final 20,000 joint NAdam updates, with terminal-state selection. SciPy limits and measured per-case stopping states are in the result package; reaching a limit does not imply convergence.
 
-五种方法合计250个唯一方法/case槽位；不增加种子、不选参、不用测试误差选权重，每组独立初始化，科学失败按原实例保留。完整的槽位成本、并行主机尝试和中断界限见run的FINAL_COST_CLOSURE。
+The five methods comprise 250 unique method/case slots. No extra seeds, parameter selection or test-error-based weight selection are used; every case is independently initialized, and scientific failures remain attached to their original instances. Complete slot costs, attempts across parallel hosts and interruption boundaries are in the run's FINAL_COST_CLOSURE.
 
 ### N1000 prediction baselines
 

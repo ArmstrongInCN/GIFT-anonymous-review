@@ -355,17 +355,17 @@ def prepare_run(directory, plan):
             source_hashes_are_provenance=True, official_sources_modified=False))
     protocol = directory / "PROTOCOL_LOCKED.md"
     if not protocol.exists():
-        protocol.write_text("""# W3 方程参数识别协议
+        protocol.write_text("""# W3 equation parameter identification protocol
 
-五配置 GIFT、PDE-FIND、PDE-FIND-KC、PINN-SR、PINN-SR-KC，三噪声 0%、1%、5%，共15个独立参数识别槽位，每槽位读取三个参数。
-从同一未改变的干净N64观测生成1%/5%数据，RandomState(0)、整组std(ddof=0)、共享Gaussian方向；每组最后转换float32。
-共同训练轨迹为本地ID0，t0–10/.02/501点。PINN用固定seed1234的500传感器、60时刻、24000训练观测与84000物理点；三条件采样设计相同。
-GIFT三个生成元从头初始化seed2026072301，6000+6000更新、batch16、lr.01/.003、原相位cosine与affine refit；保留每固定相位原validation-best再最终affine-fit，不引入候选或超参数搜索。
-PINN六实例均原Xavier seed1234、完整人口；5000 NAdam(lr.001)+原L-BFGS上限10000+六次STRidge各1000 NAdam(lr.0001)+20000后训练；冻结原精确非零mask，终态识别，无最终L-BFGS。
-PDE-FIND保留原90/4列字典与固定ridge参数；噪声预处理保持固定26/20/20阶SVD、原时间/空间多项式窗口，不按5%结果重新选秩或阈值。
-GIFT读出在同ID0的t5–6/.1十一状态上投影；PINN读取原终态物理系数。三参数nu=.01、beta=1、gamma=1仅用于计算读出误差，不用于选参或训练GIFT。
-所有9个训练实例和15个参数测量均使用新输出目录，不复用旧权重，不增加seed。失败保留唯一槽位；基础设施中断只允许从本槽位全状态恢复，不改变科学配方。
-外部算法源码和接口仍在GIFT仓库外；本次仅外部条件标识支持noise_005，官方数值源码保持不变。图保持原三参数面板、颜色、线型、字体与比例，只替换观测噪声节点和新测量值。
+Five configurations, GIFT, PDE-FIND, PDE-FIND-KC, PINN-SR and PINN-SR-KC, at three noise levels, 0%, 1% and 5%, give 15 independent parameter-identification slots, each reading three parameters.
+The 1%/5% data are generated from the same unchanged clean N64 observations using RandomState(0), whole-array std(ddof=0) and a shared Gaussian direction; each array is finally converted to float32.
+The shared training trajectory is local ID0, with t0–10/.02/501 points. PINN uses seed1234 with 500 sensors, 60 time points, 24000 training observations and 84000 physics points; all three conditions share the sampling design.
+The three GIFT generators are initialized from scratch with seed2026072301, 6000+6000 updates, batch16, lr.01/.003, original phase cosine and affine refit; the original validation-best for each fixed phase precedes the final affine fit, without candidates or hyperparameter search.
+All six PINN instances use the original Xavier seed1234 and complete cohort; 5000 NAdam(lr.001) + original L-BFGS limit10000 + six STRidge rounds of 1000 NAdam(lr.0001) each + 20000 post-training steps; the original exact nonzero mask is frozen, with terminal-state identification and no final L-BFGS.
+PDE-FIND retains the original 90/4-column dictionaries and fixed ridge parameters; noise preprocessing retains fixed SVD ranks26/20/20 and original temporal/spatial polynomial windows, without reselecting rank or threshold based on the 5% results.
+GIFT readout projects onto eleven states of the same ID0 over t5–6/.1; PINN reads its original terminal physical coefficients. The three parameters nu=.01, beta=1 and gamma=1 are used only to compute readout errors, not to select parameters or train GIFT.
+All 9 training instances and 15 parameter measurements use new output directories, without reusing old weights or adding seeds. Failures retain their unique slots; infrastructure interruptions permit only full-state restoration within that slot, without changing the scientific recipe.
+External algorithm sources and interfaces remain outside the GIFT repository; only the external condition identifier adds noise_005 support, leaving official numerical sources unchanged. Figures retain the original three-parameter panels, colors, line styles, fonts and proportions, replacing only observation-noise nodes and new measurements.
 """, encoding="utf-8")
     return lock
 

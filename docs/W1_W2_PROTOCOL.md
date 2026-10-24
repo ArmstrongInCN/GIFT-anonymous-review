@@ -1,80 +1,80 @@
-# W1/W2：单初态、N300、76点、固定配方
+# W1/W2: single initial state, N300, 76 points and fixed recipes
 
-本协议描述W1/W2的最终数据、训练方法、评价指标和图像规范。机器可读模型与数据绑定位于`prediction_extension/EXTENSION_LOCK.json`，GIFT、FNO-2D、FNO-3D的训练配置位于`prediction_native/PROTOCOL_LOCK.json`。ANIE的训练及坐标配置位于`prediction_aligned/PROTOCOL_LOCK.json`。真实目录名称用于定位来源；模型文件与SHA见[模型登记](CHECKPOINTS.md)，完整数值和图见[实验记录](../EXPERIMENTS.md)。
+This protocol describes the final W1/W2 data, training methods, evaluation metrics and figure specifications. Machine-readable model/data bindings are in `prediction_extension/EXTENSION_LOCK.json`; training configurations for GIFT, FNO-2D and FNO-3D are in `prediction_native/PROTOCOL_LOCK.json`. ANIE training and coordinate configurations are in `prediction_aligned/PROTOCOL_LOCK.json`. Actual directory names locate sources; see the [model registry](CHECKPOINTS.md) for model files and SHAs and the [experiment record](../EXPERIMENTS.md) for complete numerical results and figures.
 
-## 1. 比较方法
+## 1. Compared methods
 
-| 方法 | 训练实例与选择 | W1 | W2 |
+| Method | Training instance and selection | W1 | W2 |
 | --- | --- | --- | --- |
-| GIFT | 生成元seed2026072301、分支seed20260820；终态 | 是 | N64/N96/N128 |
-| FNO-2D | seed0；终态 | 是 | N64/N96/N128 |
-| FNO-3D | seed0；终态 | 是 | N64/N96/N128 |
-| ANIE | seed7；validation-MSE-best | 是 | 不参加 |
-| U-NO | seed0；终态 | 是 | N64/N96/N128 |
-| U-Net | seed0；终态 | 是 | N64/N96/N128 |
-| GIFT-Lite | 生成元seed2026072301、分支seed20260820；终态 | 单列减量对照 | 单列减量对照 |
+| GIFT | generator seed2026072301, branch seed20260820; terminal state | Yes | N64/N96/N128 |
+| FNO-2D | seed0; terminal state | Yes | N64/N96/N128 |
+| FNO-3D | seed0; terminal state | Yes | N64/N96/N128 |
+| ANIE | seed7; validation-MSE-best | Yes | Not included |
+| U-NO | seed0; terminal state | Yes | N64/N96/N128 |
+| U-Net | seed0; terminal state | Yes | N64/N96/N128 |
+| GIFT-Lite | generator seed2026072301, branch seed20260820; terminal state | Reduced-data comparison reported separately | Reduced-data comparison reported separately |
 
-超参数预先固定，每方法训练一次。GIFT的生成元和分支是同一方法的两个组件。ANIE按声明的验证MSE选择同次训练的检查点，并执行原早停规则；其余方法使用终态。
+Hyperparameters are fixed in advance, with one training run per method. GIFT's generator and branch are two components of the same method. ANIE selects a checkpoint from the same run using the declared validation MSE and applies the original early-stopping rule; other methods use terminal states.
 
-## 2. 共同观测与评分
+## 2. Common observations and scoring
 
-- 主训练人口：`default_rng(2026100304).permutation(1000)[:300]`，锁中保存真实有序 ID。GIFT-Lite 使用这份有序名单的前 50 条，不是原编号 0–49，也不按误差选样本。
-- 验证：原 IDs1000–1019，共 20 条；不能把其余验证轨迹或测试轨迹加入训练、统计或选模。
-- 观测：N64、原涡量单位、t=5,5.04,…,8，共 76 个真实点，从原 dense dt0.02 帧250,252,…,400精确抽取；不插值时间，不使用遗漏的 dense 帧监督。
-- 真输入：t=5 的一个场，所有方法没有 46 帧历史或未来真值输入。训练 shuffle seed2026100301；GIFT 观测中心/anchor seed2026100303，初始化 seed 独立。
-- W1：未来 75 个点，主指标先在每轨迹逐帧 relative L2 上取平均，再跨完整180人口平均；另报 t8 relative L2、future75原单位 MSE、曲线与失败人数。
-- W2：t=5–6 每0.04秒，共26点，主指标对应未来25点；另报t6、future25 MSE、频带和失败指标。每个网格从自己的一个t5场出发。
-- 已知初态不计入主 future 指标；ANIE 原训练 MSE 仍包含模型生成的初态重建。
+- Main training population: `default_rng(2026100304).permutation(1000)[:300]`, with actual ordered IDs saved in the lock. GIFT-Lite uses the first 50 trajectories of this ordered list, rather than original IDs0–49 or samples selected by error.
+- Validation: 20 trajectories, original IDs1000–1019; no remaining validation or test trajectory may enter training, statistics or model selection.
+- Observations: N64, original vorticity units, t=5, 5.04,…,8, totaling 76 genuine points, extracted exactly from original dense dt0.02 frames 250,252,…,400. There is no temporal interpolation or supervision from omitted dense frames.
+- True input: one t=5 field. No method receives 46 historical frames or future truth as input. Training shuffle seed2026100301; GIFT observation-center/anchor seed2026100303; initialization seeds are independent.
+- W1: 75 future points. The primary metric averages framewise relative L2 within each trajectory, then averages over the complete 180-trajectory population. Also report t8 relative L2, future75 MSE in original units, curves and failure counts.
+- W2: 26 points at 0.04-second intervals over t=5–6; the primary metric covers 25 future points. Also report t6, future25 MSE, frequency-band and failure metrics. Each grid starts from its own single t5 field.
+- The known initial state is excluded from primary future metrics; ANIE's original training MSE still includes the model-generated initial-state reconstruction.
 
-“可用76点观测相同”不表示全部训练损失使用相同未来长度。算法目标、损失、总更新数和成本不同；本实验不是只改变架构的单因素消融，也不是相同 GPU 预算比较。
+Identical availability of 76 observations does not imply identical future lengths in every training loss. Algorithmic objectives, losses, total updates and costs differ; this experiment is neither an architecture-only single-factor ablation nor a comparison under equal GPU budgets.
 
-## 3. 固定神经网络配方与实际监督覆盖
+## 3. Fixed neural-network recipes and actual supervision coverage
 
-| 方法 | seed / epoch上限 | 物理 batch、累积 | optimizer / weight decay | lr / scheduler | 选择及训练覆盖 |
+| Method | Seed / epoch cap | Physical batch and accumulation | Optimizer / weight decay | Learning rate / scheduler | Selection and training coverage |
 | --- | --- | --- | --- | --- | --- |
-| FNO-2D | 0 / 500 | 20，无累积 | 原 Adam / 1e-4 | .001；每epoch StepLR100×.5 | 终态；t5单初態完整闭环，课程[1,2,5,10,25,50,75]，前六段各20轮，121轮起75未来步 |
-| FNO-3D | 0 / 500 | 10，无累积 | 原 Adam / 1e-4 | .001；每epoch StepLR100×.5 | 终态；一次联合输出75未来点 |
-| ANIE | 7 / 5000 | effective32、micro6；按真实样本数累积 | 原 torch Adam / 1e-4 | 1e-4；CosineT101、eta_min1e-9；完成第17轮起推进 | 同次优化validation全76点MSE-best；每轮验证，原patience1000，等值不计counter；全76点MSE含初態 |
-| U-NO | 0 / 500 | 16，无累积；尾12保留 | 公开 `UNO/Adam.py` / 1e-5 | .001；每epoch StepLR100×.5 | 终态；从t5闭环20步，监督t5.04–5.80 |
-| U-Net | 0 / 500 | 20，无累积 | torch Adam / 1e-4 | .001；每epoch StepLR100×.5 | 终态；从t5闭环4步，监督t5.04–5.16 |
+| FNO-2D | 0 / 500 | 20, no accumulation | Original Adam / 1e-4 | .001; per-epoch StepLR100×.5 | Terminal state; complete closed loop from the single t5 initial state, curriculum [1, 2, 5, 10, 25, 50, 75], first six stages 20 epochs each, 75 future steps from epoch121 |
+| FNO-3D | 0 / 500 | 10, no accumulation | Original Adam / 1e-4 | .001; per-epoch StepLR100×.5 | Terminal state; jointly outputs 75 future points in one call |
+| ANIE | 7 / 5000 | effective32, micro6; accumulated by actual sample count | Original torch Adam / 1e-4 | 1e-4; CosineT101, eta_min1e-9; advances after completing epoch17 | Same-run validation MSE-best over all 76 points; validation every epoch, original patience1000, ties do not increment counter; full 76-point MSE includes initial state |
+| U-NO | 0 / 500 | 16, no accumulation; retains final 12 | Public `UNO/Adam.py` / 1e-5 | .001; per-epoch StepLR100×.5 | Terminal state; 20-step closed loop from t5, supervising t5.04–5.80 |
+| U-Net | 0 / 500 | 20, no accumulation | torch Adam / 1e-4 | .001; per-epoch StepLR100×.5 | Terminal state; 4-step closed loop from t5, supervising t5.04–5.16 |
 
-FNO-2D、U-NO、U-Net 使用每场逐轨迹 relative L2 对 batch 求和、再对时间求和；FNO-3D 使用展平的整个未来时空场 relative L2 对 batch 求和，不把它改成逐帧时间和。均不额外增加 `/batch` 或时间平均后改变 Adam 输入梯度。FNO-3D 使用仅由这300条声明训练输入/输出拟合的 UnitGaussianNormalizer；其他方法保持所声明原单位路径。ANIE 用物理 MSE，不改为 relative L2。状态与时空坐标统一space-major/time-minor排列，同一token严格对应同一空间位置和查询时间，训练及评价一致。U-NO 的非重入 activation checkpoint 只重算原 forward，完整闭环梯度不截断；U-Net 不做 activation checkpoint。没有 teacher forcing 或未来真值重启。
+FNO-2D, U-NO and U-Net sum per-field, per-trajectory relative L2 across the batch and then across time. FNO-3D sums relative L2 of each flattened future spatiotemporal field across the batch, without converting it to a sum of framewise errors. No additional `/batch` or time averaging changes gradients supplied to Adam. FNO-3D uses UnitGaussianNormalizer fitted only on the declared inputs/outputs of these 300 training trajectories; other methods retain their declared original-unit paths. ANIE uses physical MSE, without changing it to relative L2. States and spatiotemporal coordinates share space-major/time-minor order, with each token corresponding to the same spatial position and query time during training and evaluation. U-NO's non-reentrant activation checkpointing only recomputes the original forward pass and does not truncate complete closed-loop gradients; U-Net uses no activation checkpointing. There is no teacher forcing or restart from future truth.
 
-N300的实际更新数为FNO-2D 7500、FNO-3D 15000、U-NO9500、U-Net7500。ANIE上限5000轮、每轮10次更新；实际在第1029轮早停，共10290次更新，使用第29轮验证MSE最佳权重。U-NO/U-Net每10轮及终态在全部20条验证轨迹上进行完整75步诊断，模型选择和学习率日程保持预先声明的规则。有限终态即使验证预测失败也保留，并在完整测试集上评价。
+Actual N300 update counts are FNO-2D 7500, FNO-3D 15000, U-NO 9500 and U-Net 7500. ANIE has a5000-epoch cap and 10 updates per epoch; it actually stops at epoch1029 after 10290 updates and uses epoch29 validation-MSE-best weights. Every 10 epochs and at the terminal state, U-NO/U-Net run complete 75-step diagnostics on all 20 validation trajectories; model selection and learning-rate schedules retain the prespecified rules. Finite terminal states are retained and evaluated on the complete test set even if validation prediction fails.
 
-FNO与ANIE的优化器和学习率配方来自各自固定的官方NS实现。U-NO保留公开架构、Adam与LpLoss，使用本项目的20步监督、每轮StepLR和终态；作者示例采用40步监督、不同调度器推进频率和validation-best。U-Net使用公开架构及本项目的batch、4步闭环、学习率和选择规则。本实验比较固定配方，不作为各原论文完整实验的复现。
+FNO and ANIE optimizer and learning-rate recipes come from their respective fixed official NS implementations. U-NO retains the public architecture, Adam and LpLoss, with this project's20-step supervision, per-epoch StepLR and terminal selection; the authors' example uses 40-step supervision, a different scheduler-advancement frequency and validation-best selection. U-Net uses the public architecture with this project's batch size,4-step closed loop, learning rate and selection rule. This experiment compares fixed recipes and is not a complete reproduction of each original paper's experiments.
 
-公开模型的固定提交和必要接口调整见[外部适配](EXTERNAL_ADAPTATIONS.md)。本协议记录最终训练配置；各模型文件与源码身份见[模型登记](CHECKPOINTS.md)。
+See [external adaptations](EXTERNAL_ADAPTATIONS.md) for pinned commits and necessary interface changes to public models. This protocol records final training configurations; model files and source identities are in the [model registry](CHECKPOINTS.md).
 
-## 4. GIFT 与 GIFT-Lite
+## 4. GIFT and GIFT-Lite
 
-两者共享架构 cutoff21/rank8 及同一阶段/epoch配方，使用终态，验证只作监测：
+Both share the cutoff21/rank8 architecture and the same stage/epoch recipe, using terminal states and validation only for monitoring:
 
-| 组件 / 阶段 | epoch | batch | lr / AdamW weight decay | 日程 |
+| Component / stage | Epochs | Batch | Learning rate / AdamW weight decay | Schedule |
 | --- | --- | --- | --- | --- |
-| generator 1 / 2 | 250 / 250 | 16 | .01 / .003；1e-8 | 各phase独立optimizer，按update cosine到初始lr的2% |
-| branch derivative | 400 | 16 | .0015；1e-6 | 按epoch cosine到.0001 |
-| branch short | 50 | 5 | .0002；1e-6 | 常数 |
-| branch long 1 / 2 | 25 / 25 | 5 | .00008 / .00008；1e-6 | 常数，各phase重置optimizer |
+| generator 1 /2 | 250 /250 | 16 | .01 /.003; 1e-8 | Independent optimizer per phase; update-wise cosine decay to 2% of initial learning rate |
+| branch derivative | 400 | 16 | .0015; 1e-6 | Epoch-wise cosine decay to .0001 |
+| branch short | 50 | 5 | .0002; 1e-6 | Constant |
+| branch long 1 /2 | 25 /25 | 5 | .00008 /.00008; 1e-6 | Constant; optimizer reset per phase |
 
-generator和branch的gradient clip分别为5与1；generator在初始化及每轮结束时进行仿射拟合，共501次。N300 generator/branch分别为9500/13600次更新，N50为2000/2600次。因此GIFT-Lite同时改变数据量与总优化预算。此处GIFT-Lite指N300协议的50样本配置，来源键为`GIFT-N50`。辅助实验中的同名配置属于独立N1000协议，采用6000+6000次生成元更新、独立分支日程与验证选模；两套权重不能互换。
+Gradient clipping thresholds are 5 for the generator and 1 for the branch. The generator performs affine fitting at initialization and after each epoch,501 fits total. N300 generator/branch update counts are 9500/13600, versus 2000/2600 for N50. GIFT-Lite therefore changes both data quantity and total optimization budget. Here GIFT-Lite denotes the 50-sample configuration of the N300 protocol, with source key `GIFT-N50`. The identically named auxiliary configuration belongs to the separate N1000 protocol and uses 6000+6000 generator updates, a separate branch schedule and validation-based selection; the two sets of weights are not interchangeable.
 
-GIFT FD仅使用76个真实观测节点和dt0.04。内部RK4采用dt0.02；名义0.1/0.5秒监督滞后按最近合法观测节点选择、等距时取较早节点，实际为0.08/0.48秒。训练short/long分别为10/50个内部步；完整W1为150个内部步，每2步保存一个节点，共76点；W2为50个内部步，保存26点。数值安全阈值固定，积分器拒绝计为失败。计算使用eager执行。
+GIFT FD uses only the 76 genuine observation nodes and dt0.04. Internal RK4 uses dt0.02; nominal 0.1/0.5-second supervision lags select the nearest valid observation node, with ties resolved to the earlier node, giving actual 0.08/0.48-second lags. Short/long training uses 10/50 internal steps. Complete W1 uses 150 internal steps, saving one node every 2 steps for 76 points; W2 uses 50 internal steps and saves 26 points. Numerical safety thresholds are fixed, and integrator rejection counts as failure. Computation uses eager execution.
 
-## 5. 评价人口与跨网格能力
+## 5. Evaluation populations and cross-grid capability
 
-W1/W2分别报告确认集IDs100000–100179和探索性测试集IDs1040–1219，各180条，与训练和验证集互不重叠。确认集的四种方法结果此前已被查看，因此不是全部方法的盲测。两个集合均不用于选择训练参数；全部轨迹保留。
+W1/W2 separately report confirmation IDs100000–100179 and exploratory test IDs1040–1219, each with 180 trajectories and no overlap with training or validation. Four methods' confirmation results have already been inspected, so this is not a blind evaluation of every method. Neither population selects training parameters; all trajectories are retained.
 
-W2的三个网格逐条使用相同ID和float64初始参数。N96/N128真值在各自网格上由ETDRK4积分，内部dt0.005，padding分别147/195；t5–6按dt0.02保存51个真实节点，再精取dt0.04的26点，不插值时间。
+The three W2 grids use matching IDs and identical float64 initial-condition parameters for every trajectory. N96/N128 truth is integrated on each respective grid with ETDRK4, internal dt0.005 and padding147/195. Over t5–6, 51 genuine nodes are saved at dt0.02 and then exactly subsampled to 26 points at dt0.04, without temporal interpolation.
 
-GIFT以冻结权重在目标网格构造谱算子；FNO-2D/U-NO/U-Net直接接受目标场并递归25次。FNO-3D保持训练时的75个联合时间token，完整预测后取前25点；冻结N64 normalizer统计仅作确定性的空间周期Fourier插值，不拟合目标网格数据。U-Net的固定像素核对应的物理长度随网格变化。ANIE不参加W2。具体接口与Nyquist/DFT约定见[W2实现](W1_W2_PROTOCOL.md)。
+GIFT constructs spectral operators on the target grid with frozen weights; FNO-2D/U-NO/U-Net directly accept the target field and recurse 25 times. FNO-3D retains its 75 jointly predicted training-time tokens and takes the first 25 points after complete prediction. Frozen N64 normalizer statistics undergo only deterministic periodic spatial Fourier interpolation, without fitting target-grid data. U-Net's fixed pixel kernels correspond to different physical lengths as the grid changes. ANIE does not participate in W2. See the [W2 implementation](W1_W2_PROTOCOL.md) for interfaces and Nyquist/DFT conventions.
 
-失败保留全人口；训练失败保留唯一slot，测试非有限或solver拒绝保留实际reason/前缀。全人口指标不可定义时JSON为null，finite-only值仅诊断，不按成功子集排名。W2 t5–6前缀完整有限时，不把只在t6以后出现的W1失败硬套为一秒失败。没有跨训练seed SD。
+Failures retain the full population: training failures retain their unique slots, and non-finite test predictions or solver rejections retain their actual reasons/prefixes. Undefined full-population metrics are JSON null; finite-only values are diagnostic and are not used to rank successful subsets. A complete finite W2 t5–6 prefix is not counted as a one-second failure merely because its W1 prediction fails after t6. There is no standard deviation across training seeds.
 
-## 6. 耗时、图像与数值来源
+## 6. Timing, figures and numerical provenance
 
-七种方法的训练进程墙钟时间、计时范围和来源见[耗时记录](PERFORMANCE.md)。训练时间包括数据准备、训练、验证、检查点I/O和导出；GIFT的两个组件合计为同一方法的成本，W2不重复计入训练时间。各方法监督覆盖和更新预算不同，耗时须结合其配方解读。
+Training-process wall-clock times, timing scopes and provenance for the seven methods are in the [timing record](PERFORMANCE.md). Training time includes data preparation, training, validation, checkpoint I/O and export; GIFT's two components count together as the cost of one method, and W2 does not count training time again. Methods differ in supervision coverage and update budgets, so timing must be interpreted alongside their recipes.
 
-确认与探索集分别保存raw、metric、report和figures。W1固定ID100005/1045及t5/6/7/8；W2固定ID100110/1150、N128及t6。正文采用PNG预览，原SVG曲线用于编辑和导出；图的色阶、指标单位及失败表示见[图像说明](FIGURES.md)。
+Confirmation and exploratory populations separately retain raw data, metrics, reports and figures. W1 fixes IDs100005/1045 and t5/6/7/8; W2 fixes IDs100110/1150, N128 and t6. PNG previews appear in the text; original SVG curves support editing and export. See the [figure guide](FIGURES.md) for color scales, metric units and failure representations.
 
-汇总、曲线数值与选定场数组分别位于[W1结果包](../results/formal/W1_flow_prediction_20261007/published.json)和[W2结果包](../results/formal/W2_cross_resolution_20261007/published.json)。清单记录源数值、模型/数据身份和SHA-256；完整权重与预测HDF位于声明的外部实验目录。独立评价命令见[运行说明](EXPERIMENT_EXECUTION.md)。W3和S1–S3各有独立协议，结果分别解释。
+Summaries, numerical curves and selected-field arrays are in the [W1 result package](../results/formal/W1_flow_prediction_20261007/published.json) and [W2 result package](../results/formal/W2_cross_resolution_20261007/published.json). Manifests record source numbers, model/data identities and SHA-256; complete weights and prediction HDF files reside in the declared external experiment directories. Independent evaluation commands are in the [execution guide](EXPERIMENT_EXECUTION.md). W3 and S1–S3 have separate protocols and are interpreted individually.

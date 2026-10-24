@@ -8,8 +8,8 @@ from __future__ import annotations
 
 PAPER_EXPERIMENT_ORDER = ("W1", "W2", "W3", "S1", "S2", "S3")
 EXPERIMENT_ID_CHOICES = PAPER_EXPERIMENT_ORDER
-PAPER_TITLES_ZH = {"W1": "流场演化预测", "W2": "跨分辨率预测", "W3": "方程参数识别",
-                   "S1": "高频支路有效性", "S2": "递归局部修正有效性", "S3": "初值分布对照"}
+PAPER_TITLES = {"W1": "Flow-evolution prediction", "W2": "Cross-resolution prediction", "W3": "Equation parameter identification",
+                   "S1": "High-frequency branch effectiveness", "S2": "Recursive local correction effectiveness", "S3": "Initial-condition distribution comparison"}
 PAPER_FIGURE_NUMBERS = {"W1": 2, "W2": 3, "W3": 4}
 
 CURRENT_PREDICTION_METHOD_ORDER = ("GIFT", "GIFT-N50", "fno2d", "fno3d", "uno", "unet", "anie_ns")

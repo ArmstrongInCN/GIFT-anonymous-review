@@ -132,23 +132,23 @@ def prepare_run(directory, plan):
         new_gpu_probe=False, reused_training_hours=0.))
     protocol = directory / "PROTOCOL_LOCKED.md"
     if not protocol.exists():
-        protocol.write_text("""# W1/W2 单次训练补充协议
+        protocol.write_text("""# W1/W2 supplementary single-run training protocol
 
-基础四方法权重及其W1测量直接复用v5，不再训练：GIFT、FNO2D、FNO3D、ANIE。
-新增U-NO与U-Net，各seed0、500轮、Adam lr.001、StepLR100×.5、终态测试；batch16/20、weight_decay1e-5/1e-4。
-保留项目训练目标：U-NO每条从t5单初态闭环20步(t5.04–5.80)，U-Net4步(t5.04–5.16)，不detach。
-因此这是共同输入/数据人口下的固定配方比较，训练损失、目标覆盖和计算预算不同，不声称架构单因素消融。
-另训练GIFT-N50：N300固定子集的前50条；原GIFT生成元和分支seed、阶段轮数/batch/optimizer/scheduler保持。
-GIFT-N50仅为减量数据及更新预算对照，不等于历史GIFT-Lite，也不与N300方法声称相同训练预算。
-共同原20validation；t5..8每.04共76点；单真初态；W1 future75逐帧relative L2；不选参、无多seed。
-GIFT内部RK4仍.02秒/150步，保存.04秒；原.1/.5监督目标变为.08/.48秒，coarse FD只用76观察节点。
-W2仅GIFT、FNO2D、FNO3D、U-NO、U-Net、GIFT-N50，ANIE完全不加入跨分辨率实验。
-W2 N64训练权重直接N64/N96/N128预测t5..6每.04共26点；future25相同人口逐帧relative L2；无目标网格拟合。
-FNO3D保留原75个joint query后取前25，normalizer只对冻结训练统计作确定性周期Fourier网格插值。
-确认180条复用v5已评价人口及精确初始参数；新N96/N128真值独立在该网格积分，不重抽样。
-本扩展不再是新盲测：基础四方法确认结果在设计时已知。旧test180仍探索性，禁止根据任一test调参。
-失败seed及失败轨迹完整计入。数值先保存再绘图；历史结果、权重、外部源码保持原样。
-参数、数据和权重来源见EXTENSION_LOCK.json/DATA_RECEIPT.json；全部尝试成本见JOB_EVENTS.jsonl。
+The four base methods reuse v5 weights and W1 measurements directly, without retraining: GIFT, FNO2D, FNO3D and ANIE.
+U-NO and U-Net are added, each with seed0, 500 epochs, Adam lr.001, StepLR100×.5 and terminal-state evaluation; batch16/20 and weight_decay1e-5/1e-4.
+Project training objectives are retained: U-NO uses 20 closed-loop steps (t5.04–5.80) from each single t5 initial state; U-Net uses 4 steps (t5.04–5.16), without detach.
+This therefore compares fixed recipes with shared inputs/data cohorts. Training losses, target coverage and computation budgets differ; it does not claim an architecture-only ablation.
+GIFT-N50 is also trained using the first 50 trajectories of the fixed N300 subset; original GIFT generator and branch seeds, stage epochs/batch/optimizer/scheduler are retained.
+GIFT-N50 compares reduced data and update budgets; it is not the historical GIFT-Lite and does not claim the same training budget as N300 methods.
+The original shared 20 validation trajectories are used; t5..8 every .04 gives 76 points; one true initial state; W1 future75 framewise relative L2; no parameter selection or multiple seeds.
+GIFT retains internal RK4 .02 seconds/150 steps with saving every .04 seconds; original .1/.5 supervision targets become .08/.48 seconds, and coarse FD uses only 76 observation nodes.
+W2 includes only GIFT, FNO2D, FNO3D, U-NO, U-Net and GIFT-N50; ANIE is excluded from cross-resolution experiments.
+W2 uses N64-trained weights directly on N64/N96/N128, predicting 26 points over t5..6 every .04; future25 framewise relative L2 uses matching cohorts, without target-grid fitting.
+FNO3D retains 75 original joint queries and selects the first 25; its normalizer applies deterministic periodic Fourier grid interpolation only to frozen training statistics.
+The 180 confirmation trajectories reuse the v5 evaluated cohort and exact initial parameters; new N96/N128 truth is independently integrated on each grid rather than resampled.
+This extension is not a new blind test: the four base methods' confirmation results were known at design time. The old test180 remains exploratory; neither test may be used for tuning.
+Failed seeds and trajectories are fully retained. Values are saved before plotting; historical results, weights and external source code remain unchanged.
+Parameter, data and weight sources are documented in EXTENSION_LOCK.json/DATA_RECEIPT.json; costs for all attempts are in JOB_EVENTS.jsonl.
 """, encoding="utf-8")
     return jobs, lock
 

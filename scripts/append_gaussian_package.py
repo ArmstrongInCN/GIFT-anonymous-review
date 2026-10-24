@@ -21,7 +21,7 @@ from scripts.verify_data import verify, sha256
 
 DESCRIPTION = '''
 
-## S3: Gaussian random-field initial conditions / 高斯随机场初值
+## S3: Gaussian random-field initial conditions
 
 `s3_gaussian/trajectories.h5` contains 1,220 independent N64 trajectories,
 sampled at t=0, 0.02, ..., 10 (501 frames). IDs are appended to the original
@@ -31,7 +31,7 @@ The `validation` group contains checkpoint-validation IDs 2220–2239;
 enter gradient updates. `lite.h5` is an exact subset: training 1220–1269 and
 validation 2220–2239, with no test fields.
 
-初值为周期、空间相关的平滑零均值高斯随机场，而非独立像素白噪声。
+Initial conditions are periodic, spatially correlated, smooth zero-mean Gaussian random fields rather than independent pixelwise white noise.
 For a real independent standard-normal grid z, the Fourier filter is
 h(k)=exp(−0.4²|k|²/4), with h(0)=0. The field is
 IFFT[a h(k) FFT(z)], where a=σ N/sqrt(sum h²), N=64 and

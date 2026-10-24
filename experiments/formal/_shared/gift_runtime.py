@@ -948,6 +948,6 @@ def rollout_gift(
         runtime=runtime,
         branch_audit=branch_audit,
         method_display_name=(
-            "GIFT" if branch is not None else "GIFT（高频支路关闭）"
+            "GIFT" if branch is not None else "GIFT (high-frequency branch disabled)"
         ),
     )

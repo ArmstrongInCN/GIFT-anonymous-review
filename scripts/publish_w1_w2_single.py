@@ -246,38 +246,38 @@ def cost_closure(root):
 
 
 def render_final_report(root, cost, packages):
-    lines = ["# W1/W2：N300、76点、单初态、固定配方单次实验", "",
-        "GIFT、FNO2D、FNO3D、ANIE复用已完成v5权重和W1测量；仅补训U-NO、U-Net、GIFT-N50各一次。无开发候选、参数搜索或跨seed均值/SD。",
-        "W1包含七方法；W2六方法，按用户要求完全排除ANIE。下列为真实单模型值，两个人口分别报告。", "",
-        "确认人口仍与training/validation独立，但四方法v5成绩已知，本扩展不称新盲测。原test180为探索性复评。"]
+    lines = ["# W1/W2: N300, 76 points, a single initial state and one run per fixed recipe", "",
+        "GIFT, FNO2D, FNO3D and ANIE reuse completed v5 weights and W1 measurements; only U-NO, U-Net and GIFT-N50 each receive one additional training run. There are no development candidates, parameter searches or cross-seed means/SDs.",
+        "W1 includes seven methods; W2 includes six, excluding ANIE as specified. The following are measured single-model values, reported separately for the two cohorts.", "",
+        "The confirmation cohort remains independent of training/validation, but the v5 results of four methods were known; this extension is not a new blind test. The original test180 is an exploratory reevaluation."]
     for experiment in ("W1", "W2"):
         for cohort in ("confirmation", "old_test"):
             directory = root / ("w1_evaluation" if experiment == "W1" else "w2_evaluation") / cohort
             report = read_json(directory / "numeric_report.json")
-            lines += ["", f"## {experiment} / {cohort}", "", "| 网格 | 方法 | seed | Ntrain | future平均relative L2 | 终点relative L2 | future MSE | 失败/180 |", "|---|---|---:|---:|---:|---:|---:|---:|"]
+            lines += ["", f"## {experiment} / {cohort}", "", "| Grid | Method | seed | Ntrain | Future mean relative L2 | Endpoint relative L2 | future MSE | Failed/180 |", "|---|---|---:|---:|---:|---:|---:|---:|"]
             for row in summary_rows({cohort: report}, experiment):
-                percent = lambda key: "失败/无总体值" if row[key] is None else f"{100*row[key]:.4f}%"
-                mse = "失败/无总体值" if row["future_mse"] is None else f"{row['future_mse']:.7g}"
+                percent = lambda key: "failed/no aggregate value" if row[key] is None else f"{100*row[key]:.4f}%"
+                mse = "failed/no aggregate value" if row["future_mse"] is None else f"{row['future_mse']:.7g}"
                 lines.append(f"| {row['grid']} | {LABELS[row['method']]} | {row['seed']} | {row['training_count']} | {percent('future_mean_relative_l2')} | {percent('endpoint_relative_l2')} | {mse} | {row['failed_count']}/180 |")
-            lines += ["", f"[数值报告]({directory.as_posix()}/numeric_report.json) · [完整图及解释]({directory.as_posix()}/RESULTS.md)"]
-    lines += ["", "## 实际成本", "", "| 本run工作 | 尝试数 | 进程墙钟小时 |", "|---|---:|---:|"]
+            lines += ["", f"[Numeric report]({directory.as_posix()}/numeric_report.json) | [Complete figures and interpretation]({directory.as_posix()}/RESULTS.md)"]
+    lines += ["", "## Actual cost", "", "| Work in this run | Attempts | Process wall-clock hours |", "|---|---:|---:|"]
     for label, item in cost["grouped_process_wall"].items():
         lines.append(f"| {label} | {item['attempts']} | {item['process_seconds']/3600:.4f} |")
-    lines += ["", "新训练总墙钟小时：" + f"{cost['new_training_process_seconds']/3600:.4f}。内部推理/验证时间包含于所属进程，未重复加算。", "",
-        "| 复用模型 | 原v5训练进程小时 | 本次新增训练小时 |", "|---|---:|---:|"]
+    lines += ["", "Total wall-clock hours for new training: " + f"{cost['new_training_process_seconds']/3600:.4f}. Internal inference/validation time is included in its process and is not counted twice.", "",
+        "| Reused model | Original v5 training process hours | New training hours in this run |", "|---|---:|---:|"]
     for label, seconds in cost["reused_model_original_training_process_seconds"].items():
         lines.append(f"| {LABELS[label]} | {seconds/3600:.4f} | 0 |")
-    lines += ["", "## 解释边界与适配", "",
-        "- 共同N300/20validation、t5–8/.04/76点、单真初态；原生损失、目标覆盖与计算预算不同，本实验比较固定训练配方，不隔离架构单一因素。",
-        "- U-NO闭环20步监督到t5.80；U-Net4步监督到t5.16，均从t5固定origin。长时表现须结合这一差异解释。",
-        "- GIFT-N50是共同N300固定序列前50条，保持GIFT阶段epoch/optimizer/batch，实际总更新与计算减少；不能称历史GIFT-Lite或等更新的样本量消融。",
-        "- GIFT原.1/.5秒监督目标实际变为.08/.48秒；内部RK4 .02/150步，保存.04/76节点；coarse FD仅用76观察点。",
-        "- FNO2D v5采用固定闭环课程；ANIE v5用官方NS训练分支/原坐标、eval dropout关闭和原MSE-best。这里不是原论文完整复现。",
-        "- W2全部复用N64训练权重，不作目标网格拟合；FNO3D75joint queries后取前25，统计只由冻结N64 training数据确定。U-Net固定像素卷积核的物理尺度会随网格改变。",
-        "- 完整失败人口及科学失败slot保留，未按test选择权重/参数或删失败。历史W3/S1–S3与旧W1/W2原样保留并标明原协议。", "",
-        "## 发布与核验", "", "新的精简包只含summary和选定图源，不是完整raw或可恢复训练目录。"]
-    lines += [f"- [{experiment}发布包]({item['path'].replace(chr(92), '/')}/published.json)" for experiment, item in packages.items()]
-    lines += ["", "数值及训练审计：FINAL_RESULT_AUDIT.json、FINAL_TRAINING_AUDIT.json；成本：FINAL_COST_CLOSURE.json。图的视觉检查和主文档迁移需另核验后才标记全部交付完成。"]
+    lines += ["", "## Interpretation boundaries and adaptations", "",
+        "- Shared N300/20 validation trajectories, t5–8/.04/76 points and one true initial state; native losses, target coverage and computation budgets differ. This experiment compares fixed training recipes and does not isolate architecture as a single factor.",
+        "- U-NO uses 20 closed-loop supervised steps through t5.80; U-Net uses 4 through t5.16, both from a fixed t5 origin. Long-term performance must be interpreted with this difference in mind.",
+        "- GIFT-N50 uses the first 50 trajectories in the shared fixed N300 sequence, retaining GIFT stage epochs/optimizer/batch while reducing total updates and computation. It is not the historical GIFT-Lite or a sample-size ablation with equal update counts.",
+        "- The original GIFT .1/.5-second supervision targets become .08/.48 seconds; internal RK4 .02/150 steps, saved .04/76 nodes; coarse FD uses only the 76 observation points.",
+        "- FNO2D v5 uses a fixed closed-loop curriculum; ANIE v5 uses the official NS training branch/original coordinates, disabled evaluation dropout and the original MSE-best selection. This is not a full reproduction of the original papers.",
+        "- W2 reuses all N64-trained weights without target-grid fitting; FNO3D selects the first 25 of 75 joint queries, with statistics determined only by frozen N64 training data. The physical scale of fixed-pixel U-Net kernels changes with the grid.",
+        "- All failed trajectories and scientific-failure slots are retained; weights/parameters are not selected using test results and failures are not removed. Historical W3/S1–S3 and earlier W1/W2 remain unchanged with their original protocols identified.", "",
+        "## Publication and verification", "", "The new compact package contains only summaries and selected figure sources, without full raw outputs or resumable training directories."]
+    lines += [f"- [{experiment} publication package]({item['path'].replace(chr(92), '/')}/published.json)" for experiment, item in packages.items()]
+    lines += ["", "Numerical and training audits: FINAL_RESULT_AUDIT.json and FINAL_TRAINING_AUDIT.json; costs: FINAL_COST_CLOSURE.json. Figure appearance and main-document migration require separate verification before delivery is marked complete."]
     fixed_text(root / "RESULTS.md", "\n".join(lines) + "\n")
 
 

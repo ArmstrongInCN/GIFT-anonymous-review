@@ -1,6 +1,6 @@
-# Independent data generation / 独立数据生成
+# Independent data generation
 
-当前W3单轨迹数据使用 `scripts.generate_w3_parameter_data --profile single_trajectory_terminal_v1` 直接生成；完整准备、采样和新run gate步骤见 [W3_REPRODUCTION.md](W3_REPRODUCTION.md)。默认 `validation_best_v1` 保留旧21轨迹协议，不能替代当前50组单轨迹实验。W1/W2从现成正式包直接训练的入口见 [CURRENT_REPRODUCTION.md](CURRENT_REPRODUCTION.md)。
+Current W3 single-trajectory data are generated directly with `scripts.generate_w3_parameter_data --profile single_trajectory_terminal_v1`; see [W3_REPRODUCTION.md](W3_REPRODUCTION.md) for complete preparation, sampling and new-run gate steps. The default `validation_best_v1` retains the old 21-trajectory protocol and cannot replace the current 50-case single-trajectory experiment. The entry points for W1/W2 training directly from the supplied formal package are in [CURRENT_REPRODUCTION.md](CURRENT_REPRODUCTION.md).
 
 **Training from scratch on supplied fields** and **generating those fields again**
 are different workflows. Fresh training initializes a model without trained
@@ -8,22 +8,22 @@ weights. Regeneration additionally integrates the PDE from specified initial
 conditions and creates the observation inputs. Neither is achieved by renaming
 or relabelling a downloaded checkpoint.
 
-从零训练可使用单独下载的数据包；从初值重新生成仿真场还涉及求解器及浮点环境。
-模型训练、数据生成和已有检查点的快速读出分别使用独立命令。
+Training from scratch can use the separately downloaded data package; regenerating simulated fields from initial conditions also depends on the solver and floating-point environment.
+Model training, data generation and quick readout from existing checkpoints use separate commands.
 
-当前本地发布包为 `../GIFT-dataset`，目录和字段见[包说明](data_package/README.md)及[数据字典](data_package/DATA_DICTIONARY.md)。2026年10月20日的重整仅复制、归类已有输入和正式数值源数据，没有重新积分或训练，也尚未更新 ScienceDB。以下再生成命令各自产生新的运行产物，不自动重建含六个实验结果的完整发布包。
+The current local release package is `../GIFT-dataset`; its directories and fields are described in the [package guide](data_package/README.md) and [data dictionary](data_package/DATA_DICTIONARY.md). The reorganization on 2026-10-20 only copied and categorized existing inputs and formal numerical source data; it performed no new integration or training and has not yet updated ScienceDB. Each regeneration command below produces new run artifacts and does not automatically rebuild the complete release package containing results for six experiments.
 
-## W1/W2 观测选择与配对人口
+## W1/W2 observation selection and paired populations
 
-W1/W2主训练从N64数据池IDs0–999按 `default_rng(2026100304).permutation(1000)[:300]` 固定选择300条，validation为IDs1000–1019，共20条；GIFT-Lite为该有序名单前50条。新版包中的父数据为 `prediction/four_vortex/train1000_n64_t0_t10_dt0p02.h5`。t5–8每0.04秒的76个真实点，精确取dense dt0.02数据的帧250,252,…,400，不做时间插值。推理输入仅各轨迹自己的t5场；loss覆盖按各算法配方声明，U-NO/U-Net只监督20/4步。
+W1/W2 main training selects a fixed set of 300 trajectories from N64 pool IDs0–999 using `default_rng(2026100304).permutation(1000)[:300]`; validation uses 20 trajectories, IDs1000–1019. GIFT-Lite uses the first 50 entries of this ordered list. The parent data in the new package are `prediction/four_vortex/train1000_n64_t0_t10_dt0p02.h5`. The 76 genuine points at 0.04-second intervals over t5–8 are extracted exactly from dense dt0.02 frames 250,252,…,400, without temporal interpolation. Inference takes only each trajectory's own t5 field; loss coverage is declared per method, with U-NO/U-Net supervised for only 20/4 steps.
 
-新版直接提供 `prediction/w1_w2/train300_validation20.h5` 和 `train50_validation20.h5`。原运行的 N300 文件为 `prediction_native/data/train300_validation20_5to8_dt0p04.h5`；测量时输入manifest SHA-256为 `57c61d26b8b48e44c9518e320c2bcf97529919756d95ba1d3d2b58d662eb823f`，原绑定保存在仓库外来源登记。完整ID与源帧绑定记录在原 `PROTOCOL_LOCK.json`，模型/数据绑定文件为 `prediction_extension/EXTENSION_LOCK.json`；新版将这些来源记录复制到 `metadata/provenance/w1_w2/`，不改写历史绝对路径或科学证据。
+The new package directly supplies `prediction/w1_w2/train300_validation20.h5` and `train50_validation20.h5`. The original run's N300 file is `prediction_native/data/train300_validation20_5to8_dt0p04.h5`; the input-manifest SHA-256 at measurement was `57c61d26b8b48e44c9518e320c2bcf97529919756d95ba1d3d2b58d662eb823f`, and the original binding is retained in the external provenance registry. The complete ID and source-frame bindings are in the original `PROTOCOL_LOCK.json`, and the model/data binding file is `prediction_extension/EXTENSION_LOCK.json`. The new package copies these provenance records to `metadata/provenance/w1_w2/` without rewriting historical absolute paths or scientific evidence.
 
-确认IDs100000–100179和探索IDs1040–1219各180条，与training/validation不重叠。确认集采用seed2026100302记录初值参数，但其中四种方法成绩此前已被查看，不能视为全部方法盲测；探索人口另行评价。W2同ID使用逐元素相同float64初值参数，在N64/N96/N128各自网格积分真实真值；N96/N128使用ETDRK4内部dt0.005、padding147/195，存储dense dt0.02，再精取t5–6每0.04秒26节点。高网格真值不以N64插值替代。ANIE仅参加W1。
+Confirmation IDs100000–100179 and exploratory IDs1040–1219 each contain 180 trajectories and do not overlap training/validation. The confirmation population records initial-condition parameters using seed2026100302, but four methods' scores have already been inspected, so this is not a blind evaluation of every method; the exploratory population is evaluated separately. W2 uses elementwise-identical float64 initial-condition parameters for matching IDs and integrates truth independently on the N64/N96/N128 grids. N96/N128 use ETDRK4 with internal dt0.005 and padding147/195, save dense dt0.02 observations and then extract 26 nodes at 0.04-second intervals over t5–6. Higher-grid truth is not replaced by interpolation from N64. ANIE participates only in W1.
 
-新版确认真值为 `prediction/w1_w2/confirmation_n64.h5`（t5–8、dt0.02、151帧）和 `confirmation_n96_n128.h5`（t5–6、dt0.02、51帧），正式评价仍按整数帧取76/26节点。探索人口的dense观测位于 `prediction/four_vortex/test_n64_n96_n128_dt0p02.h5`。
+The new confirmation truth files are `prediction/w1_w2/confirmation_n64.h5` (t5–8, dt0.02, 151 frames) and `confirmation_n96_n128.h5` (t5–6, dt0.02, 51 frames); formal evaluation still extracts 76/26 nodes by integer frame indexing. Dense observations for the exploratory population are in `prediction/four_vortex/test_n64_n96_n128_dt0p02.h5`.
 
-W1主指标排除输入初态，评价future75；W2评价future25。GIFT内部RK4 dt0.02、保存dt0.04和监督时距0.08/0.48秒属于模型积分与训练配置，不改变上述真实数据节点。W3局部识别和S1–S3独立N1000/GIFT-Lite协议采用下列各自数据生成与编号定义，不能把其样本量或46帧基线历史输入解释为W1/W2设置。
+The primary W1 metric excludes the input initial state and evaluates future75; W2 evaluates future25. GIFT's internal RK4 dt0.02, saving dt0.04 and supervision lags 0.08/0.48 seconds are model-integration and training settings and do not alter the genuine data nodes above. W3 local identification and the independent S1–S3 N1000/GIFT-Lite protocols use their respective data-generation and numbering definitions below; their sample sizes or 46-frame baseline input histories must not be interpreted as W1/W2 settings.
 
 ## Environment and boundaries
 
@@ -106,7 +106,7 @@ group's standard deviation, without finite-sample RMS renormalization. Sampling
 uses seed 1234, trajectory 0, 500 sensors, 60 times, a 24,000/6,000 observation-row
 split and 60,000 LHS physics points. No neural-network weights are exported.
 
-## Same-attempt continuation / 同次运行断点续算
+## Same-attempt continuation
 
 Add `--resume` with the same output directory, scientific inputs and integration
 configuration. Source and runtime records remain descriptive; changes to them
@@ -205,8 +205,8 @@ Successful input checks and small native continuation tests establish the
 execution route, not agreement of full-budget trained metrics. Regenerated
 inputs retain their own source and numerical identities in each training run.
 
-跨设备不承诺逐比特一致。检验时分别记录文件哈希、数组差异、训练权重和实验指标，
-不能将其中一种核验替代其它层次的验证。
+Bitwise identity across devices is not guaranteed. Verification records file hashes, array differences, trained weights and experimental metrics separately;
+a check at one level cannot replace verification at the other levels.
 
 ## S3 Gaussian initial-condition population
 

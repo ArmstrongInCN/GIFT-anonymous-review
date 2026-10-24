@@ -1,12 +1,12 @@
-# 外部算法来源与必要适配
+# External algorithm sources and necessary adaptations
 
-**当前工作树仅保留外部算法的来源、文字适配步骤和通用接口。** 本文与[手工适配操作说明](EXTERNAL_MANUAL_ADAPTATION.md)只记录官方仓库、固定版本、需要实施的操作和外部接口。使用者须在 GIFT 仓库文件夹之外下载、适配和保存外部算法，不能因目录已被 Git 忽略就把代码放在仓库内。[新模型发布](../REVIEWER_README.md#reference-weights-and-full-experiments)清理了公开副本的源码元数据，取代旧包；旧附件仍保留，Git 历史和旧标签也未改写，范围见[外部算法边界说明](EXTERNAL_REPOSITORY_POLICY.md)。
+**The current working tree retains only external algorithm provenance, written adaptation steps and generic interfaces.** This document and the [manual adaptation instructions](EXTERNAL_MANUAL_ADAPTATION.md) record official repositories, pinned versions, required operations and external interfaces. Users must download, adapt and retain external algorithms outside the GIFT repository folder; Git ignore rules do not permit storing them inside it. The [new model release](../REVIEWER_README.md#reference-weights-and-full-experiments) removes source metadata from public copies and supersedes the old package; old attachments remain, and Git history and old tags have not been rewritten. See the [external algorithm boundary policy](EXTERNAL_REPOSITORY_POLICY.md).
 
-GIFT 的 `adapters/` 只连接使用者准备的仓库外运行接口。`GIFT_EXTERNAL_ADAPTER_ROOT` 指向包含外部 `adapters/` 模块的根目录，缺省为相邻 `gift-external-runtime/`；`GIFT_EXTERNAL_ROOT` 指向官方 checkout 父目录；`GIFT_ANIE_SOURCE_ROOT` 指向 ANIE checkout。原官方 checkout 保持只读，必要适配在仓库外实施并保存。这些本地依赖不属于 GIFT Git 仓库，也不随 GIFT 发布。新使用者需自行按文字步骤提供接口；纯下载工具不执行算法适配。
+GIFT's `adapters/` only connects runtime interfaces prepared externally by users. `GIFT_EXTERNAL_ADAPTER_ROOT` points to a root containing external `adapters/` modules and defaults to the adjacent `gift-external-runtime/`; `GIFT_EXTERNAL_ROOT` points to the parent of official checkouts; `GIFT_ANIE_SOURCE_ROOT` points to the ANIE checkout. Original official checkouts remain read-only; necessary adaptations are implemented and retained externally. These local dependencies are not part of the GIFT Git repository and are not distributed with it. New users must provide interfaces by following the written steps; download-only tools do not adapt algorithms.
 
-## 官方来源
+## Official sources
 
-| 方法 | 官方仓库 | 固定 commit |
+| Method | Official repository | Pinned commit |
 | --- | --- | --- |
 | FNO-2D / FNO-3D | [NeuralOperator](https://github.com/neuraloperator/neuraloperator) | `01d2aeca407f85ce1c1e78b313edb749973fc051` |
 | U-NO | [UNO](https://github.com/ashiq24/UNO) | `19462d82729ef64ef7b9e97056ddcaaf3044ad47` |
@@ -14,42 +14,42 @@ GIFT 的 `adapters/` 只连接使用者准备的仓库外运行接口。`GIFT_EX
 | ANIE | [ANIE](https://github.com/emazap7/ANIE) | `2071ad709b260a6c305450affcf7168fd825f692` |
 | PDE-FIND | [PDE-FIND](https://github.com/snagcliffs/PDE-FIND) | `86911349b9fac82996e35465a13d06205730cc05` |
 | PINN-SR | [EQDiscovery](https://github.com/isds-neu/EQDiscovery) | `9a20ebe6783e00bc53e3cdd1fd7ff07d2170f496` |
-| PINN 原生优化器 | [TensorFlow](https://github.com/tensorflow/tensorflow)，tag `v1.15.0` | `590d6eef7e91a6a7392c8ffffb7b58f2e0c8bc6b` |
+| Native PINN optimizers | [TensorFlow](https://github.com/tensorflow/tensorflow), tag `v1.15.0` | `590d6eef7e91a6a7392c8ffffb7b58f2e0c8bc6b` |
 
-仓库内 `external_sources.json` 与 `anie_sources.json` 仅保存来源、版本、选定文件和文字操作标识。固定 commit 与散列用于来源记录，不能代替上游许可。ANIE 的固定版本未找到明确许可，当前也未取得额外书面授权；文字说明、论文引用及公开副本元数据清理均不能替代授权。全部许可状态和原始研究引用见 [README](../README.md)；安装、独立命令及目录设置见 [SETUP.md](SETUP.md)。
+Repository files `external_sources.json` and `anie_sources.json` retain only provenance, versions, selected files and written operation identifiers. Pinned commits and hashes record provenance but do not replace upstream licenses. No explicit license was found for the pinned ANIE version, and additional written authorization has not been obtained; written descriptions, paper citations and public-copy metadata cleanup cannot substitute for authorization. Full license status and original research citations are in [README](../README.md); installation, independent commands and directory settings are in [SETUP.md](SETUP.md).
 
-## 当前单初态 W1/W2
+## Current single-initial-state W1/W2 profile
 
-当前[固定协议](W1_W2_PROTOCOL.md)使用 `single_native76_n300`，各方法一个固定种子模型，不进行选参或多seed。来源适配与实验设置须分别理解：使用公开架构不等于执行作者原数据和训练脚本，也不意味着各方法监督时域或预算相等。
+The current [fixed protocol](W1_W2_PROTOCOL.md) uses `single_native76_n300`, with one fixed-seed model per method and no hyperparameter search or multiple seeds. Source adaptation and experiment settings must be distinguished: using a public architecture does not mean running the authors' original data and training scripts, nor equal supervision horizons or budgets across methods.
 
-| 方法 | 仓库外必要操作 | 保留的计算与当前任务设置 |
+| Method | Necessary external operations | Preserved computations and current task settings |
 | --- | --- | --- |
-| FNO-2D / FNO-3D | 隔离模块顶层示例；在原唯一fc0位置把输入数改为3/4，包含一场及两/三坐标；提供原工具类。 | 保留谱层、forward、初始化、原LpLoss和normalizer。FNO-2D闭环课程属于训练协议；FNO-3D输出75未来点。W2保持75 joint queries，冻结normalizer空间Fourier插值后截前25，不拟合目标网格统计。 |
-| U-NO | 提供原模型/积分算子/Adam/LpLoss；导入时不重设训练种子；用原构造参数设置in_width=5、width=32、pad=0、factor=.75。 | 一场加原四坐标；保留谱、插值梯度与BatchNorm。当前20步完整闭环监督及非重入activation checkpoint、每epoch调度和终态选择由协议声明。 |
-| U-Net | 从原Baselines/U-net.py提供U_net，原构造参数设输入/输出通道1/1、kernel_size=3、dropout_rate=0。 | 保留卷积/BN/skip和初始化。四步训练预算与优化器为项目配方；N64/N96/N128使用同一全卷积模型，像素核物理尺度随N改变。 |
-| ANIE | 提供原NS网络和积分求解器；将空间和时间坐标与状态统一为space-major/time-minor；功能性attention dropout跟随train/eval状态，训练概率仍0.5。 | 当前aligned_ns_single_v1使用原c=0/y_init分支；保持原全局decoder、积分归一化、迭代规则和autograd。训练/评价均76查询，micro6/effective32为显存组织；仅参加W1。 |
+| FNO-2D / FNO-3D | Isolate module-level examples; change inputs to 3/4 at the original unique fc0, comprising one field and two/three coordinates; provide original utility classes. | Retain spectral layers, forward computation, initialization, original LpLoss and normalizer. FNO-2D closed-loop curriculum is part of the training protocol; FNO-3D outputs 75 future points. W2 retains 75 joint queries, Fourier-interpolates the frozen spatial normalizer and selects the first 25 outputs, without fitting target-grid statistics. |
+| U-NO | Provide original model/integral operators/Adam/LpLoss; do not reset training seeds on import; use original constructor arguments in_width=5, width=32, pad=0, factor=.75. | One field plus original four coordinates; retain spectral computations, interpolation gradients and BatchNorm. The protocol declares current full closed-loop supervision for 20 steps, non-reentrant activation checkpoints, per-epoch scheduling and terminal-state selection. |
+| U-Net | Provide U_net from original Baselines/U-net.py; use original constructor arguments for input/output channels 1/1, kernel_size=3, dropout_rate=0. | Retain convolution/BN/skip connections and initialization. Four-step training and the optimizer are project recipes; N64/N96/N128 use one fully convolutional model, whose pixel-kernel physical scale varies with N. |
+| ANIE | Provide original NS network and integral solver; align spatial and temporal coordinates with states in space-major/time-minor order; functional attention dropout follows train/eval, retaining probability 0.5 for training. | Current aligned_ns_single_v1 uses the original c=0/y_init branch; retain original global decoder, integral normalization, iteration rules and autograd. Training/evaluation both use 76 queries; micro6/effective32 organizes GPU memory. W1 only. |
 
-ANIE 的坐标与评价 dropout 修正会改变未经修正的函数，因此当前结果称为带明确修正的官方 notebook 架构实验，不称为作者实现逐字原样复现。此处的仓库边界整理只移动既有本地依赖，不再引入这些数值变化，也不将旧权重切换到另一profile。
+ANIE coordinate and evaluation-dropout corrections change the uncorrected function, so current results are described as experiments using the official notebook architecture with explicit corrections, not a verbatim reproduction of the authors' implementation. Repository-boundary reorganization only relocates existing local dependencies; it does not introduce these numerical changes again or switch old weights to another profile.
 
-各方法的参数源、监督覆盖、loss、真实预算和数值环境见[单次固定配方实现](W1_W2_PROTOCOL.md)、[补充基线实现](W1_W2_PROTOCOL.md)、[W2实现](W1_W2_PROTOCOL.md)与[结果解释范围](W1_W2_PROTOCOL.md)。ANIE的必要修正及其当前配置见[ANIE实现说明](ANIE_ADAPTATION.md)。实际模型及权重身份见 [CHECKPOINTS.md](CHECKPOINTS.md)，成本见 [PERFORMANCE.md](PERFORMANCE.md)。
+Parameter sources, supervision coverage, losses, actual budgets and numerical environments are described in the [single fixed-recipe implementation](W1_W2_PROTOCOL.md), [additional baseline implementation](W1_W2_PROTOCOL.md), [W2 implementation](W1_W2_PROTOCOL.md) and [result interpretation scope](W1_W2_PROTOCOL.md). ANIE corrections and current configuration are documented in the [ANIE implementation notes](ANIE_ADAPTATION.md). Actual model and weight identities are in [CHECKPOINTS.md](CHECKPOINTS.md), and costs in [PERFORMANCE.md](PERFORMANCE.md).
 
-## 独立46帧与方程识别协议
+## Independent 46-frame and equation-identification protocols
 
-历史46帧预测使用独立输入投影：FNO-2D/FNO-3D为48/49，U-NO为50，U-Net输入通道46。不能把单初态权重和历史46帧权重互换。ANIE不同profile同样须按权重记录的坐标和自由项分支加载；不能静默升级旧模型的运算路径。
+Historical 46-frame prediction uses independent input projections: 48/49 for FNO-2D/FNO-3D, 50 for U-NO and 46 input channels for U-Net. Single-state weights and 46-frame-history weights are not interchangeable. ANIE profiles must likewise load the coordinate and free-term branches recorded with their weights; do not silently upgrade the computation path of an old model.
 
-PDE-FIND 和 PINN-SR 服务独立 W3，不随 W1/W2改动。其仓库外操作为：
+PDE-FIND and PINN-SR serve independent W3 and do not change with W1/W2. Their external operations are:
 
-| 方法 | 操作范围 |
+| Method | Operation scope |
 | --- | --- |
-| PDE-FIND | 提供原库构造/回归函数；所有NumPy版本均将唯一空索引比较改为显式长度判断（1.26已会报错）。按原意执行非空索引的最终最小二乘；旧单元素数组误判的细节见手工说明。保持seed0样本和顺序；局部RNG及成员查找仅隔离/加速抽样。周期速度、SVD及导数处理沿用声明协议。 |
-| PINN-SR 网络 | 提供原PhysicsInformedNN；TF1引用变量使原SciPy候选feed实际进入目标；已知库4/开放库90。保留Xavier、网络、损失及完整人口。默认原生FP32；可选同式坐标导数/残差计算与XLA须通过完整配对精度验收。 |
-| PINN-SR 稀疏回归 | 使用原TrainSTRidge/STRidge；保留seed0随机训练行原顺序和float32继承系数，rcond=−1及唯一空索引长度判断。立即明确赋值，纯读取无副作用；ADO固定回归系数，只更新网络，post固定最后STRidge支持并联合细化。 |
-| TensorFlow优化器 | 使用固定官方NAdam和ScipyOptimizerInterface，不复写内核。保留同一NAdam slots/beta；记录真实SciPy终止与目标变化。耦合保存回归支持与模型/optimizer/FSM；L-BFGS内部中断从阶段边界重做，不宣称内部求解器状态续算。 |
+| PDE-FIND | Provide original library-construction/regression functions; replace the unique empty-index comparison with an explicit length check for every NumPy version (1.26 already raises an error). Execute final least squares for nonempty indices as originally intended; see manual notes for the old single-element-array misclassification. Retain seed0 samples and order; local RNG and membership lookup only isolate/accelerate sampling. Periodic velocity, SVD and derivative processing follow the declared protocol. |
+| PINN-SR network | Provide original PhysicsInformedNN; TF1 reference variables ensure original SciPy candidate feeds enter the objective; known library 4/open library 90. Retain Xavier initialization, network, losses and full populations. Default native FP32; optional equivalent coordinate-derivative/residual evaluation and XLA require complete paired accuracy acceptance. |
+| PINN-SR sparse regression | Use original TrainSTRidge/STRidge; retain original seed0 random training-row order and float32 inherited coefficients, rcond=−1 and the unique empty-index length check. Assign explicitly and immediately, with side-effect-free reads; ADO fixes regression coefficients and updates only the network, while post-training fixes final STRidge support and jointly refines. |
+| TensorFlow optimizers | Use pinned official NAdam and ScipyOptimizerInterface without rewriting kernels. Retain the same NAdam slots/beta; record actual SciPy termination and objective changes. Save regression support together with model/optimizer/FSM; redo interrupted internal L-BFGS from phase boundaries without claiming internal solver-state continuation. |
 
-当前W3的两种PINN方法各完成50次独立训练，共100份正式终态模型，采用论文Methods式(6b)/(8)的`paper_ado_v1`，保持固定回归系数ADO与最后回归支持后训练。TF1引用变量、纯读取与原回归行顺序的操作见[手工适配说明](EXTERNAL_MANUAL_ADAPTATION.md#pinn-sr-与-tensorflow-优化器)，完整数据和实际结果见[W3协议](W3_PROTOCOL.md)。
+Each of the two current W3 PINN methods completed 50 independent trainings, producing 100 formal terminal models under `paper_ado_v1` from paper Methods equations (6b)/(8), retaining fixed-regression-coefficient ADO and post-training with final regression support. TF1 reference-variable, pure-read and original regression-row-order operations are described in the [manual adaptation instructions](EXTERNAL_MANUAL_ADAPTATION.md#pinn-sr-and-tensorflow-optimizers); complete data and actual results are in the [W3 protocol](W3_PROTOCOL.md).
 
-具体目标文件、构造顺序、张量轴、坐标规则、库列序、接口名称与检查步骤均见[手工适配操作说明](EXTERNAL_MANUAL_ADAPTATION.md)。小规模加载、前向或续算检查只能验证对应计算条件，不能代替完整科学实验。
+Target files, construction order, tensor axes, coordinate rules, library column order, interface names and checks are detailed in the [manual adaptation instructions](EXTERNAL_MANUAL_ADAPTATION.md). Small-scale loading, forward or continuation checks validate only their specific computational conditions and cannot replace complete scientific experiments.
 
-## 致谢
+## Acknowledgments
 
-感谢 NeuralOperator、U-NO、Turbulent-Flow-Nets、ANIE、EQDiscovery、PDE-FIND、TensorFlow 与 SciPy 的作者和贡献者。请引用实际使用的研究并遵守上游条款；GIFT 许可不授予外部代码的额外权利。
+We thank the authors and contributors of NeuralOperator, U-NO, Turbulent-Flow-Nets, ANIE, EQDiscovery, PDE-FIND, TensorFlow and SciPy. Cite the research actually used and comply with upstream terms; the GIFT license grants no additional rights to external code.

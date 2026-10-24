@@ -785,9 +785,9 @@ def render_report(output):
     for path in (target, marker):
         if path.exists():
             shared.preserve_interrupted(path)
-    lines = ["# W2：N64训练模型的原生跨分辨率预测", "", f"人口：{report['cohort']}，每个网格180条；{report['interpretation']}。", "",
-             "单初态t5输入，观测间隔0.04秒，报告t5.04–6的25帧；主指标为每条轨迹逐帧相对L2的未来均值，再对完整180条取均值。ANIE按用户要求不加入W2。",
-             "", "| 网格 | 方法 | future25相对L2 | t6相对L2 | future MSE | 失败/180 | 新增推理秒 |", "|---|---|---:|---:|---:|---:|---:|"]
+    lines = ["# W2: native cross-resolution prediction by N64-trained models", "", f"Cohort: {report['cohort']}, 180 trajectories per grid; {report['interpretation']}.", "",
+             "The input is a single initial state at t5, with observations every 0.04 seconds and 25 reported frames over t5.04–6. The primary metric averages framewise relative L2 over future frames for each trajectory, then across all 180 trajectories. ANIE is excluded from W2 as specified.",
+             "", "| Grid | Method | future25 relative L2 | t6 relative L2 | future MSE | Failed/180 | Additional inference seconds |", "|---|---|---:|---:|---:|---:|---:|"]
     def value(entry, key):
         number = entry.get("summary", {}).get("metrics", {}).get(key, {}).get("mean")
         return "—" if number is None else f"{number:.6g}"
@@ -797,9 +797,9 @@ def render_report(output):
             seconds = entry.get("cost", {}).get("inference_seconds")
             lines.append(f"| N{grid} | {DISPLAY_NAMES[label]} | {value(entry,'future_mean_relative_l2')} | {value(entry,'t6_relative_l2')} | "
                          f"{value(entry,'future_mse')} | {entry['summary']['failed_count']} | {'—' if seconds is None else f'{seconds:.1f}'} |")
-    lines.extend(["", "GIFT-N50单列为样本预算消融；它不满足主比较的共同N300训练人口，不能替代完整GIFT。已保存W1的N64预测前缀若复用，新增模型推理耗时为0，原成本仍留在W1记录。", "",
-                  "FNO3D保持原75个未来时间token，完整联合预测后取前25；FNO2D/U-NO/U-Net原生递归25次，GIFT内部RK4仍0.02秒，50步保存26帧。所有模型只在N64训练，目标网格无拟合、无重训。", "",
-                  "外频带保留原W2语义：P21、Q21、P22–31、outer P31，以及剔除Nyquist线的reliable outer P31；最后一项只在N96/N128存在。见逐方法metrics JSON/HDF。", "", "局限："])
+    lines.extend(["", "GIFT-N50 is listed separately as a sample-budget ablation; it does not use the shared N300 training cohort of the main comparison and cannot replace full GIFT. When the saved prefix of W1 N64 predictions is reused, additional model inference time is 0; its original cost remains in the W1 record.", "",
+                  "FNO3D retains the original 75 future time tokens and selects the first 25 after full joint prediction. FNO2D/U-NO/U-Net use 25 native recursive steps; GIFT retains internal RK4 steps of 0.02 seconds and saves 26 frames over 50 steps. All models are trained only on N64, without target-grid fitting or retraining.", "",
+                  "Outer-frequency bands retain their original W2 definitions: P21, Q21, P22–31, outer P31, and reliable outer P31 excluding Nyquist lines; the last exists only for N96/N128. See the per-method metrics JSON/HDF files.", "", "Limitations:"])
     lines.extend([f"- {item}" for item in report["limitations"]])
     with target.open("x", encoding="utf-8") as stream:
         stream.write("\n".join(lines)+"\n")

@@ -74,23 +74,23 @@ def prepare(root, *, anie_source=None):
     protocol = root / "PROTOCOL_LOCKED.md"
     if not protocol.exists():
         with protocol.open("x", encoding="utf-8") as f:
-            f.write("""# ANIE 时空坐标一致性训练协议
+            f.write("""# ANIE training protocol for aligned spatiotemporal coordinates
 
-ANIE使用固定官方提交2071ad709b260a6c305450affcf7168fd825f692的原NS网络。
-状态、空间坐标与时间坐标均按space-major/time-minor顺序对应；保留已声明的
-评价dropout模式修正，原训练functional dropout概率仍为0.5。
+ANIE uses the original NS network at fixed official commit 2071ad709b260a6c305450affcf7168fd825f692.
+States, spatial coordinates and temporal coordinates share space-major/time-minor order. The declared
+evaluation-dropout correction is retained; the original training functional-dropout probability remains 0.5.
 
-训练池为固定300轨迹，验证为IDs1000–1019共20轨迹。t5–8、每0.04秒共76点，
-输入仅t5真场。原encoder、8192→64→256→4096全局decoder、积分迭代及条件分支不变。
-从相同seed7重新初始化；不用既有模型权重。全76点原单位MSE，Adam lr1e-4、
-coupled weight decay1e-4，有效batch32/micro6，尾12样本保留。上限5000轮，
-原validation MSE-best和patience1000早停；完成第17轮起推进CosineT101、eta_min1e-9。
-不进行参数选择、多seed或test调参，不加入表示预训练、局部decoder、归一化或初态锚定。
+The training pool contains 300 fixed trajectories; validation uses 20 trajectories, IDs1000–1019. There are 76 points over t5–8 at 0.04-second intervals,
+with only the true t5 field as input. The original encoder, 8192→64→256→4096 global decoder, integral iterations and conditional branch are retained.
+Reinitialize with the same seed7, without existing model weights. Use original-unit MSE over all 76 points, Adam lr1e-4,
+coupled weight decay1e-4, effective batch32/micro6, retaining the final 12 samples. The limit is 5000 epochs,
+with the original validation MSE-best selection and patience1000 early stopping; CosineT101 with eta_min1e-9 advances starting after epoch17.
+No parameter selection, multiple seeds or test-based tuning is used; no representation pretraining, local decoder, normalization or initial-state anchoring is added.
 
-W1的其余六种方法复用其已完成的原权重、数值预测及指标。两评价人口各180条，
-确认ID100000–100179及探索性旧test1040–1219。两人口的既有成绩已曝光，不能称新盲测。
-主指标为future75逐帧relative L2均值，保留全部失败人口，另报t8/MSE/成本。
-W2按既有协议排除ANIE，数据、结果及图不变。新结果沿用当前W1原绘图结构和方法。
+The other six W1 methods reuse their completed original weights, predictions and metrics. Each evaluation cohort contains 180 trajectories,
+with confirmation IDs100000–100179 and exploratory old-test IDs1040–1219. Existing results for both cohorts were exposed, so this is not a new blind test.
+The primary metric is future75 mean framewise relative L2; all failures are retained, with t8/MSE/costs reported separately.
+W2 excludes ANIE under the existing protocol, retaining its data, results and figures. New results use the current W1 plotting structure and methods.
 """)
     forecast = root / "COST_FORECAST.json"
     if not forecast.exists():

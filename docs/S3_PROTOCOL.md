@@ -1,4 +1,4 @@
-# S3 — Initial-condition distribution / 初值分布对照
+# S3 — Initial-condition distribution comparison
 
 S3 compares four-vortex and smooth, spatially correlated Gaussian random-field
 initial conditions. Each distribution has its own models, 1,000 training
@@ -29,8 +29,8 @@ are a h(k) FFT(z), where a=σN/sqrt(sum h²), N=64 and σ=1.0908839162005806.
 This fixed ensemble amplitude uses only original training initial fields.
 Individual realizations are not normalized, clipped or rejected. PCG64 is seeded
 by SeedSequence([2026091601, trajectory_id]). Both distributions use a periodic
-[0,2π)² domain, viscosity0.01, forcing−4cos(4y), full-spectrum
-ETDRK4, internal dt0.005, output dt0.02, N64, padding99, float32/complex64.
+[0, 2π)² domain, viscosity 0.01, forcing −4cos(4y), full-spectrum
+ETDRK4, internal dt0.005, output dt0.02, N64, padding 99, float32/complex64.
 
 ## Released input identity
 
@@ -66,13 +66,13 @@ python -m scripts.run_training uno --run-training --data-profile gaussian --outp
 python -m scripts.run_training unet --run-training --data-profile gaussian --output ../runs/s3_unet
 ```
 
-Repeat each GIFT branch command independently for seeds20260821 and20260822.
-Full-data generator and branch each receive500epochs, reported separately.
-All four baselines receive500epochs. The two distributions use the same data
+Repeat each GIFT branch command independently for seeds 20260821 and 20260822.
+Full-data generator and branch each receive 500 epochs, reported separately.
+All four baselines receive 500 epochs. The two distributions use the same data
 size, model structure, loss, optimizer, batch size, rollout lengths, random seeds
-and selection rules. GIFT-Lite uses50 trajectories,12000 generator updates and
+and selection rules. GIFT-Lite uses 50 trajectories, 12000 generator updates and
 5834 branch updates per seed. Update counts and timing scope are reported in
-[EXPERIMENTS.md](../EXPERIMENTS.md) section5.3.
+[EXPERIMENTS.md](../EXPERIMENTS.md) section 5.3.
 
 For full-data GIFT and the Lite generator, replace `--run-training` with
 `--resume` to continue the same attempt. For Lite branches and the four baselines,
@@ -81,8 +81,8 @@ runtime; a published model is not an optimizer-state continuation checkpoint.
 
 ## Evaluation and figure protocol
 
-S3 uses the t=5 anchor, baseline46-frame context and150-step future through
-t=8. All180 test trajectories are evaluated. Failed predictions, if any,
+S3 uses the t=5 anchor, baseline 46-frame context and 150-step future through
+t=8. All 180 test trajectories are evaluated. Failed predictions, if any,
 remain in numerical records with finite counts; they are never silently omitted
 from a reported full-population comparison.
 
@@ -97,8 +97,8 @@ python -m experiments.formal.s3_initial_distribution.plot_results --result-dir .
 
 The paired curve places four-vortex measurements on the left and Gaussian
 measurements on the right, with common axes and method colours. The keyframe
-plates use prespecified IDs1045 and2265, each the sixth trajectory of its test
-set, with GIFT branch seed20260820. The experiment record embeds PNG previews
+plates use prespecified IDs 1045 and 2265, each the sixth trajectory of its test
+set, with GIFT branch seed 20260820. The experiment record embeds PNG previews
 and links the original SVG files. Colour limits are fixed per distribution;
 no outcome-dependent trajectory selection or method-specific scaling is used.
 

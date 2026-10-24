@@ -264,25 +264,25 @@ def render_report(directory, reports, plan=None):
     sparse = plan is not None and "query_times" in plan
     future = plan["future_steps"] if sparse else 150
     first_time = f"{5 + plan['observation_dt']:g}" if sparse else "5.02"
-    lines = ["# W1 共同训练与评价实验结果", "",
-             f"共同输入：t=5单个N64涡量场；目标：{first_time}–8秒{future}个未来帧。",
-             (f"共同训练：从原1000条中按预定seed{plan['subset_seed']}抽取的固定{plan['training_count']}条；仅5–8秒{plan['observation_points']}点观测。"
-              if sparse else "训练IDs0–999，仅5–8秒151点观测。") +
-             "validation IDs1000–1019。各方法独立从头训练seed11/22/33。",
-             f"主误差为每条轨迹未来{future}个逐帧relative L2的平均，再跨轨迹平均；±为三个训练seed的样本SD。", ""]
+    lines = ["# W1 results with shared training and evaluation", "",
+             f"Shared input: one N64 vorticity field at t=5; target: {first_time}–8 seconds with {future} future frames.",
+             (f"Shared training: predefined seed{plan['subset_seed']} selects a fixed set of {plan['training_count']} trajectories from the original 1000; only {plan['observation_points']} points observed over 5–8 seconds."
+              if sparse else "Training IDs0–999, with only 151 observation points over 5–8 seconds.") +
+             "Validation IDs1000–1019. Each method is trained independently from scratch with seeds11/22/33.",
+             f"The primary error averages framewise relative L2 over {future} future frames for each trajectory, then across trajectories; ± is the sample SD across the three training seeds.", ""]
     for title, report in reports:
-        lines.extend(["## " + title, "", "| 方法 | 未来平均相对L2 | t8相对L2 | 完整seed状态 |", "|---|---:|---:|---|"])
+        lines.extend(["## " + title, "", "| Method | Future mean relative L2 | t8 relative L2 | Complete seed status |", "|---|---:|---:|---|"])
         for method, result in report["methods"].items():
             def number(key):
                 record = result["metrics"][key]
-                return "失败/不完整" if record["mean"] is None else f"{100*record['mean']:.3f}% ± {100*record['training_seed_sample_sd']:.3f}%"
+                return "failed/incomplete" if record["mean"] is None else f"{100*record['mean']:.3f}% ± {100*record['training_seed_sample_sd']:.3f}%"
             lines.append(f"| {method} | {number('future_mean_relative_l2')} | {number('t8_relative_l2')} | {result['status']} |")
-        lines.extend(["", "完整数值、逐轨迹误差、失败率和成本见对应评价目录的numeric_report.json；图由已保存数值生成。", ""])
-    lines.extend(["旧test为已参与方案开发的探索性复评。新确认集为配置锁定后生成的180条独立同分布轨迹，结果未用于调参。",
-                  "FNO2D包含预先固定的闭环horizon课程；GIFT保留分阶段观测导数/rollout目标。此处比较的是完整声明训练流程，不是只换网络结构的消融。", ""])
+        lines.extend(["", "Complete values, per-trajectory errors, failure rates and costs are in numeric_report.json in the corresponding evaluation directory; figures are generated from saved values.", ""])
+    lines.extend(["The old test is an exploratory reevaluation used during protocol development. The new confirmation set contains 180 independent, identically distributed trajectories generated after configuration locking; its results were not used for tuning.",
+                  "FNO2D includes a predefined closed-loop horizon curriculum; GIFT retains staged observed-derivative/rollout objectives. The comparison covers the complete declared training procedures, rather than an ablation that changes only network architecture.", ""])
     if plan is not None and plan.get("profile") == "sparse76_n300":
-        lines.extend(["N300/dt0.04任务中，GIFT原.1/.5秒监督lead按预锁nearest/tie-earlier规则改为.08/.48秒；内部RK4仍.02秒，每两步保存一次，共76点。",
-                      "固定关键帧为t5.48/6/7/8；t5.5不在共同网格，未用插值替代。完整方案及修改说明见PROTOCOL_LOCKED.md和EXECUTION.md。", ""])
+        lines.extend(["For the N300/dt0.04 task, original GIFT .1/.5-second supervision leads become .08/.48 seconds under the prelocked nearest/tie-earlier rule; internal RK4 remains .02 seconds, saving every two steps for 76 points.",
+                      "Fixed keyframes are t5.48/6/7/8; t5.5 is outside the shared grid and is not replaced by interpolation. The full protocol and modifications are documented in PROTOCOL_LOCKED.md and EXECUTION.md.", ""])
     (directory / "RESULTS.md").write_text("\n".join(lines), encoding="utf-8")
 
 
@@ -331,8 +331,8 @@ def execute(directory, plan):
             atomic_json(directory / "FORMAL.json", formal)
     report_paths = []
     for cohort, data, group, title in (
-        ("old_test", plan["old_test"], "N64/test", "旧test：探索性配对复评"),
-        ("confirmation", str(confirmation_dir / "confirmation_n64_dt0p02.h5"), "test", "新增独立同分布确认")):
+        ("old_test", plan["old_test"], "N64/test", "Old test: exploratory paired reevaluation"),
+        ("confirmation", str(confirmation_dir / "confirmation_n64_dt0p02.h5"), "test", "New independent, identically distributed confirmation")):
         output = directory / "evaluation" / cohort
         args = ["--data-file", data, "--group", group, "--cohort", cohort, "--output", output,
                 "--device", plan["device"], "--batch-size", plan["evaluation_batch"]]

@@ -298,13 +298,13 @@ def prepare_run(directory, plan):
 def render_report(directory, reports, plan):
     """Combine completed single-model scores without adding seed statistics."""
     directory = Path(directory)
-    lines = ["# W1 N300/76点：固定作者配置的单次训练结果", "",
-             "每方法从头训练一次，无开发候选或超参数搜索。共同300条训练轨迹、20条validation；t=5单帧输入，预测5.04–8秒75个未来节点。",
-             "训练损失、原生阶段和预算各方法不同。本表为单次训练值，无跨seed均值/SD。", ""]
+    lines = ["# W1 N300/76 points: single-run results with fixed author configurations", "",
+             "Each method is trained once from scratch, without development candidates or hyperparameter searches. The shared data contain 300 trajectories for training and 20 for validation; a single t=5 input frame predicts 75 future nodes over 5.04–8 seconds.",
+             "Training losses, native stages and budgets differ across methods. This table reports single-run values, without cross-seed means/SDs.", ""]
     for cohort, report in reports:
-        title = "独立确认180条（主评价）" if cohort == "confirmation" else "旧test180条（探索性复评）"
-        lines.extend(["## " + title, "", "完整数值与失败人口见 [numeric_report](evaluation/" + cohort + "/numeric_report.json)。",
-                      "", "| 方法 | 实际seed | future75 relative L2 | t8 relative L2 | 未来物理MSE | 失败数/180 |", "|---|---:|---:|---:|---:|---:|"])
+        title = "Independent confirmation: 180 trajectories (primary evaluation)" if cohort == "confirmation" else "Old test: 180 trajectories (exploratory reevaluation)"
+        lines.extend(["## " + title, "", "Complete numerical values and failures: [numeric_report](evaluation/" + cohort + "/numeric_report.json).",
+                      "", "| Method | Actual seed | future75 relative L2 | t8 relative L2 | Future physical MSE | Failed/180 |", "|---|---:|---:|---:|---:|---:|"])
         for method, result in report.get("methods", {}).items():
             summary = result.get("summary", {})
             metrics = summary.get("metrics", result.get("metrics", {}))
@@ -312,31 +312,31 @@ def render_report(directory, reports, plan):
                 value = metrics.get(key)
                 if isinstance(value, dict):
                     value = value.get("mean")
-                return "失败/不完整" if value is None else f"{100*value:.3f}%"
-            count = summary.get("failed_count", "见numeric_report")
+                return "failed/incomplete" if value is None else f"{100*value:.3f}%"
+            count = summary.get("failed_count", "see numeric_report")
             mse = metrics.get("future_mse", {}).get("mean")
-            mse_text = "失败/不完整" if mse is None else f"{mse:.6g}"
+            mse_text = "failed/incomplete" if mse is None else f"{mse:.6g}"
             lines.append(f"| {method} | {result.get('seed', SEEDS.get(method))} | {number('future_mean_relative_l2')} | {number('t8_relative_l2')} | {mse_text} | {count}/180 |")
         lines.append("")
         for method, result in report.get("methods", {}).items():
-            lines.append(f"- {method}: {result.get('status')}; 测试权重epoch={result.get('selected_epoch', '无合格权重')}" +
-                         ("; 原因=" + str(result["reason"]) if result.get("reason") else ""))
+            lines.append(f"- {method}: {result.get('status')}; evaluated checkpoint epoch={result.get('selected_epoch', 'no eligible checkpoint')}" +
+                         ("; reason=" + str(result["reason"]) if result.get("reason") else ""))
         marker = read_json(directory / "evaluation" / cohort / "FIGURES_COMPLETE.json", {})
         for relative in marker.get("files", []):
             if relative.endswith("future_error.png") or relative.endswith("fixed_id_keyframes.png"):
-                label = "误差曲线" if relative.endswith("future_error.png") else "固定轨迹关键帧"
+                label = "Error curve" if relative.endswith("future_error.png") else "Fixed-trajectory keyframes"
                 lines.append(f"- [{label}]({(directory / 'evaluation' / cohort / relative).as_posix()})")
         lines.append("")
     events_path = directory / "JOB_EVENTS.jsonl"
     events = [json.loads(line) for line in events_path.read_text(encoding="utf-8").splitlines() if line.strip()]
-    lines.extend(["## 当前run实际进程耗时", "", "| 工作 | 次数 | 墙钟小时 |", "|---|---:|---:|"])
+    lines.extend(["## Actual process time for this run", "", "| Work | Count | Wall-clock hours |", "|---|---:|---:|"])
     for label in dict.fromkeys(event["label"] for event in events):
         rows = [row for row in events if row["label"] == label]
         lines.append(f"| {label} | {len(rows)} | {sum(row.get('process_seconds', 0.) for row in rows)/3600:.3f} |")
-    lines.extend(["", "上述包含各次尝试初始化、训练/原生验证和I/O；中断尝试必须计入。旧run已消耗成本独立列在各评价cost报告，不合并为本run训练时间。",
-                  "", "GIFT原.1/.5秒监督lead已改为.08/.48秒；内部RK4 .02秒，保存/观测 .04秒。FNO2D固定课程为1/2/5/10/25/50/75步，最后380轮完整75步；该课程不是原论文设置。",
-                  "ANIE原坐标排列恢复；训练/评价统一NS训练分支，eval dropout关闭为显式推理适配。其他模型按终态测试，ANIE按原validation MSE最佳权重测试。",
-                  "", "配置与修改说明见PROTOCOL_LOCKED.md、PROTOCOL_LOCK.json及IMPLEMENTATION.md。数值在绘图前保存，固定ID1040/100000、t5.48/6/7/8。"])
+    lines.extend(["", "These costs include initialization, training/native validation and I/O for each attempt; interrupted attempts must be counted. Costs of earlier runs are listed separately in each evaluation cost report and are not added to this run's training time.",
+                  "", "The original GIFT .1/.5-second supervision leads become .08/.48 seconds; internal RK4 uses .02 seconds with saving/observation at .04 seconds. FNO2D uses a fixed 1/2/5/10/25/50/75-step curriculum, with all 75 steps in the final 380 epochs; this curriculum is not from the original paper.",
+                  "The original ANIE coordinate order is restored; training/evaluation share the NS training branch, with evaluation dropout explicitly disabled as an inference adaptation. Other models use their terminal state; ANIE uses the original validation-MSE-best checkpoint.",
+                  "", "Configuration and modifications are documented in PROTOCOL_LOCKED.md, PROTOCOL_LOCK.json and IMPLEMENTATION.md. Values are saved before plotting; fixed IDs1040/100000 and t5.48/6/7/8 are used."])
     path = directory / "RESULTS.md"
     if path.exists():
         raise RuntimeError("final historical report already exists; verify rather than overwrite")

@@ -1,34 +1,34 @@
-# Independent experiments / 独立实验运行
+# Independent experiments
 
-新机执行当前协议优先使用 [CURRENT_REPRODUCTION.md](CURRENT_REPRODUCTION.md) 的 `scripts.reproduce_prediction`（准备→每方法训练→校验→W1/W2评价）和 [W3_REPRODUCTION.md](W3_REPRODUCTION.md)（全50输入gate→训练/测量→250槽聚合）。这两条流程直接消费正式数据包，不依赖旧运行目录；下文的本机来源登记保留为历史复核接口。
+For current-protocol execution on a new machine, start with `scripts.reproduce_prediction` in [CURRENT_REPRODUCTION.md](CURRENT_REPRODUCTION.md) (preparation → per-method training → validation → W1/W2 evaluation) and [W3_REPRODUCTION.md](W3_REPRODUCTION.md) (all-50-input gate → training/measurement → 250-slot aggregation). Both workflows directly consume formal data packages without requiring old run directories; local source registries below remain as historical review interfaces.
 
-## W1/W2 运行接口与输入绑定
+## W1/W2 execution interfaces and input bindings
 
-[N300/76点协议](W1_W2_PROTOCOL.md) 声明固定种子与超参数、每方法一个训练实例、单真实t5场。W1七方法预测75步，W2除ANIE外六方法在配对N64/N96/N128预测25步。主方法N300，GIFT-Lite使用有序名单前50条；U-NO/U-Net训练监督分别20/4步，GIFT采用0.08/0.48秒监督、内部dt0.02与保存dt0.04。
+The [N300/76-point protocol](W1_W2_PROTOCOL.md) declares fixed seeds and hyperparameters, one training instance per method and a single true t5 field. W1 predicts 75 steps with seven methods; W2 predicts 25 steps on paired N64/N96/N128 grids with six methods, excluding ANIE. Main methods use N300 and GIFT-Lite uses the first 50 entries of the ordered list; U-NO/U-Net receive 20/4 supervised steps, and GIFT uses 0.08/0.48-second supervision with internal dt0.02 and saved dt0.04.
 
-配置与模型/数据绑定目录为 `prediction_extension`；其 `EXTENSION_LOCK.json` 指向 `prediction_native/PROTOCOL_LOCK.json` 及各方法声明的训练或权重配置。模型路径与SHA见 [CHECKPOINTS.md](CHECKPOINTS.md)。当前W1评价入口读取七个完整模型及各自声明的绑定，不自动重训。
+The configuration and model/data-binding directory is `prediction_extension`; its `EXTENSION_LOCK.json` points to `prediction_native/PROTOCOL_LOCK.json` and each method's declared training or weight configuration. Model paths and SHAs are in [CHECKPOINTS.md](CHECKPOINTS.md). Current W1 evaluation loads seven complete models and their declared bindings without automatically retraining.
 
 ```powershell
 python -m scripts.run_experiment W1 --help
 python -m scripts.run_anie_coordinate_refresh --help
 ```
 
-ANIE配置、模型选择和W1数值绑定于 `prediction_aligned`；其时空token排列见 [ANIE实现说明](ANIE_ADAPTATION.md)。其他方法与W2使用各自声明目录。
+ANIE configuration, model selection and W1 numerical results are bound to `prediction_aligned`; its space-time token ordering is described in the [ANIE implementation notes](ANIE_ADAPTATION.md). Other methods and W2 use their respective declared directories.
 
-`scripts.run_anie_coordinate_refresh`提供显式坐标对齐的ANIE训练入口。`scripts.run_w1_single`的四方法参考队列和`scripts.run_w1_w2_single`的扩展队列使用各自机器JSON配方，前者的ANIE配置为`native_ns_single_v1`，后者复用该实例；它们不能代替当前七方法主表的`aligned_ns_single_v1`模型。逐模型训练必须读取对应模型的实际机器配置，而不能把通用协议文档当作另一队列的配方。
+`scripts.run_anie_coordinate_refresh` provides an ANIE training entry point with explicit coordinate alignment. The four-method reference queue in `scripts.run_w1_single` and extended queue in `scripts.run_w1_w2_single` use their respective machine JSON recipes; the former uses ANIE configuration `native_ns_single_v1`, reused by the latter. They cannot replace the `aligned_ns_single_v1` model in the current seven-method main table. Per-model training must read that model's actual machine configuration, rather than treating generic protocol documentation as another queue's recipe.
 
-当前W1评价接口为`experiments.additional.w1_current_evaluate`，从仓库外来源登记加载七个固定模型，其中ANIE使用声明的时空对齐配置。输入参数明确指定真值文件、组、确认或探索人口及新输出目录；W2接口为`experiments.additional.w2_single_evaluate`，明确指定base/extension锁、模型与配对真值。锁内配置、数据及checkpoint身份必须一致。各入口的`--help`给出实际参数。输出目录须与输入数据及已有测量分开；恢复使用同一配置目录，保留已提交预测和进度，同一目录不能同时启动两个执行进程。科学失败保留方法和轨迹，不通过修改参数或重抽种子替换失败结果。
+The current W1 evaluation interface is `experiments.additional.w1_current_evaluate`, loading seven fixed models through an external source registry, with ANIE using its declared space-time-aligned configuration. Inputs explicitly specify truth file, group, confirmation or exploration population, and a new output directory. W2 uses `experiments.additional.w2_single_evaluate`, explicitly binding base/extension locks, models and paired truths. Configuration, data and checkpoint identities within locks must agree. Each entry point's `--help` lists actual arguments. Keep outputs separate from input data and existing measurements; resume with the same configuration directory, retaining committed predictions and progress, and never run two processes simultaneously in one directory. Preserve methods and trajectories with scientific failures; do not replace failed results by changing parameters or resampling seeds.
 
 ```shell
 python -m scripts.run_experiment W1 --data-file <truth.h5> --group <cohort_group> --cohort confirmation --output ../runs/w1_confirmation --skip-plots
 python -m scripts.run_experiment W2 --help
 ```
 
-`scripts.run_experiment`默认使用当前N300单初态W1/W2协议。独立N1000、46帧历史接口仅在显式`--protocol reference`时使用；该入口用于对应参考协议，不能将其测量作为当前W1/W2主表。
+`scripts.run_experiment` defaults to the current N300 single-state W1/W2 protocol. The independent N1000, 46-frame-history interface is used only with explicit `--protocol reference`; measurements from that reference protocol cannot populate current W1/W2 main tables.
 
-确认IDs100000–100179与训练、验证独立，但两个评价人口的成绩已被查看，因此不是全部方法的盲测；探索IDs1040–1219另行报告。两人口分别产生完整raw预测、numeric指标和图像来源。结果目录为 [W1包](../results/formal/W1_flow_prediction_20261007/) 与 [W2包](../results/formal/W2_cross_resolution_20261007/)。原生网络/训练接口见 [实现说明](W1_W2_PROTOCOL.md)，W2网格与数据绑定见 [W2实现](W1_W2_PROTOCOL.md)，计时范围见 [PERFORMANCE.md](PERFORMANCE.md)。
+Confirmation IDs100000–100179 are independent of training and validation, but both evaluation populations' scores have been viewed, so this is not a blind test for all methods; exploration IDs1040–1219 are reported separately. Each population produces complete raw predictions, numeric metrics and figure provenance. Result directories are the [W1 package](../results/formal/W1_flow_prediction_20261007/) and [W2 package](../results/formal/W2_cross_resolution_20261007/). See [implementation notes](W1_W2_PROTOCOL.md) for native networks/training interfaces, [W2 implementation](W1_W2_PROTOCOL.md) for W2 grid/data bindings, and [PERFORMANCE.md](PERFORMANCE.md) for timing scope.
 
-代码和命令直接使用W1、W2、W3、S1、S2、S3，不另选编号空间。当前W1/W2计算使用上述N300单初态入口；S1–S3在各自独立N1000人口和模型上执行，不能互换权重或输入接口。
+Code and commands directly use W1, W2, W3, S1, S2 and S3, without another identifier space. Current W1/W2 computations use the N300 single-state entry points above; S1–S3 run on their own independent N1000 populations and models, with incompatible weights and input interfaces.
 
 Use the prediction/GIFT environment and external roots from [SETUP.md](SETUP.md).
 Each command below runs **one experiment**, reads selected trained weights and
@@ -38,8 +38,8 @@ threads for prediction/GIFT inference, one for W3 regression/coefficient readout
 one visible GPU, and no global TF32 override. Place `--device cpu` before the
 experiment name for an explicitly recorded CPU evaluation.
 
-以下命令彼此独立。使用随项目提供的完整权重可跳过训练；使用自己从零训练得到的
-权重时，显式指定相应路径。输出目录不能与数据、源码或已有结果重叠。
+The following commands are independent. Complete supplied weights allow training to be skipped; when using your own
+weights trained from scratch, specify their paths explicitly. Output directories must not overlap data, source code or existing results.
 
 ## W3: 50-case noise-free equation-parameter evaluation
 
@@ -47,7 +47,7 @@ The completed W3 campaign evaluates five methods on 50 fixed parameter combinati
 
 The run-specific dual-host coordinator and exact run/checkpoint state are retained outside the GIFT Git repository. To reproduce training, obtain each external algorithm from the cited upstream repository, install it outside the GIFT directory, apply the written [manual adaptation](EXTERNAL_MANUAL_ADAPTATION.md), and follow the fixed [W3 protocol](W3_PROTOCOL.md). Each training and parameter-readout command must bind the matching case dataset, true coefficients, and checkpoint.
 
-The data/result package is [W3_single_trajectory_20261010](../results/formal/W3_single_trajectory_20261010/README.md). W3 Figure 4 contains three parameter-specific absolute percentage error distributions, each in a single full-range panel: [图4a：ν SVG](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/w3_parameter_nu_errors.svg)（[PNG](../assets/figures/w3_parameter_nu_errors.png)） · [图4b：β SVG](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/w3_parameter_beta_errors.svg)（[PNG](../assets/figures/w3_parameter_beta_errors.png)） · [图4c：γ SVG](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/w3_parameter_gamma_errors.svg)（[PNG](../assets/figures/w3_parameter_gamma_errors.png)）. The [source manifest](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/figure_manifest.json) binds them to the saved parameter rows. Dots have a nominal diameter of 2.1 pt, and the seven lanes are separated by 2.7 pt for a compact point layer. Each real observation is rendered as 12 concentric, stroke-free, same-color transparent discs, using a radial Gaussian alpha profile for a soft edge (sigma 0.42 relative to the radius; nominal central alpha 0.95). This only softens each real marker; it does not apply KDE, smooth the data or add artificial observations. The shared renderer places all exact APE observations on seven fixed horizontal lanes over a Tukey boxplot: solid Q1–Q3 boxes, an extended median line passing through and beyond each box to about 2.1 times its height, and thin whiskers with short caps ending at the outermost actual observations within the inclusive fences [Q1 − 1.5 × IQR, Q3 + 1.5 × IQR], where IQR = Q3 − Q1. Observations outside the whiskers remain included in the same 50 points without extra duplicate flier symbols; means are not marked separately. Solid axes, bold black method names and saturated dark method colors for dots, boxes and whiskers are retained. Median lines use exactly the same color as the box, with a 1.6 pt width and their existing extended length. Horizontal ticks point upward into the plot, while their numerical labels stay below the axis. The bottom spine extends beyond the final tick by 3% of the axis span without changing measured x coordinates or tick positions. Plot text is limited to method names, ticks, the parameter-specific horizontal-axis label and a numerical Median value for each method; see [figure specifications](FIGURES.md).
+The data/result package is [W3_single_trajectory_20261010](../results/formal/W3_single_trajectory_20261010/README.md). W3 Figure 4 contains three parameter-specific absolute percentage error distributions, each in a single full-range panel: [Figure 4a: ν SVG](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/w3_parameter_nu_errors.svg) ([PNG](../assets/figures/w3_parameter_nu_errors.png)) · [Figure 4b: β SVG](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/w3_parameter_beta_errors.svg) ([PNG](../assets/figures/w3_parameter_beta_errors.png)) · [Figure 4c: γ SVG](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/w3_parameter_gamma_errors.svg) ([PNG](../assets/figures/w3_parameter_gamma_errors.png)). The [source manifest](../results/formal/W3_single_trajectory_20261010/figures/parameter_distributions/figure_manifest.json) binds them to the saved parameter rows. Dots have a nominal diameter of 2.1 pt, and the seven lanes are separated by 2.7 pt for a compact point layer. Each real observation is rendered as 12 concentric, stroke-free, same-color transparent discs, using a radial Gaussian alpha profile for a soft edge (sigma 0.42 relative to the radius; nominal central alpha 0.95). This only softens each real marker; it does not apply KDE, smooth the data or add artificial observations. The shared renderer places all exact APE observations on seven fixed horizontal lanes over a Tukey boxplot: solid Q1–Q3 boxes, an extended median line passing through and beyond each box to about 2.1 times its height, and thin whiskers with short caps ending at the outermost actual observations within the inclusive fences [Q1 − 1.5 × IQR, Q3 + 1.5 × IQR], where IQR = Q3 − Q1. Observations outside the whiskers remain included in the same 50 points without extra duplicate flier symbols; means are not marked separately. Solid axes, bold black method names and saturated dark method colors for dots, boxes and whiskers are retained. Median lines use exactly the same color as the box, with a 1.6 pt width and their existing extended length. Horizontal ticks point upward into the plot, while their numerical labels stay below the axis. The bottom spine extends beyond the final tick by 3% of the axis span without changing measured x coordinates or tick positions. Plot text is limited to method names, ticks, the parameter-specific horizontal-axis label and a numerical Median value for each method; see [figure specifications](FIGURES.md).
 
 To reproduce the figure on CPU, choose new output paths:
 
@@ -119,5 +119,5 @@ This read-only check verifies completion, file hashes, SVG structure and the
 figure-to-report binding. It does not recompute metrics, inspect visual layout or
 establish scientific accuracy; those checks remain separate.
 
-数值结果、表格和 SVG 必须来自同一组已完成实验。保留非有限预测和失败记录，
-不通过换检查点、删轨迹或改色限来维持预期的模型排名。
+Numerical results, tables and SVGs must come from the same completed experiments. Retain nonfinite predictions and failure records;
+do not change checkpoints, remove trajectories or adjust color limits to preserve an expected model ranking.

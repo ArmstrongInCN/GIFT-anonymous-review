@@ -53,8 +53,8 @@ def test_sparse76_lock_and_both_evaluations_have_75_future_points(tmp_path, monk
     monkeypatch.setattr(queue, "call_module", child)
     queue.execute(tmp_path, plan)
     report = (tmp_path / "RESULTS.md").read_text(encoding="utf-8")
-    assert "75个未来帧" in report and "300条" in report and "76点" in report
-    assert "5.04" in report and "30个逐帧" not in report
+    assert "75 future frames" in report and "300 trajectories" in report and "76 points" in report
+    assert "5.04" in report and "30 framewise" not in report
 
 
 def test_sparse31_n200_is_new_scientific_identity_with_seven_updates_per_epoch(tmp_path):
@@ -99,8 +99,8 @@ def test_sparse_queue_binds_generation_and_both_evaluations_to_common_grid(tmp_p
     monkeypatch.setattr(queue, "call_module", child)
     queue.execute(tmp_path, plan)
     text = (tmp_path / "RESULTS.md").read_text(encoding="utf-8")
-    assert "30个未来帧" in text and "200条" in text and "31点" in text
-    assert "150个逐帧" not in text
+    assert "30 future frames" in text and "200 trajectories" in text and "31 points" in text
+    assert "150 framewise" not in text
 
 
 def test_queue_selects_only_validation_then_uses_fresh_formal_jobs_and_keeps_failures(tmp_path, monkeypatch):

@@ -420,7 +420,7 @@ def draw_prediction_fields_only(
     fig.text(
         0.50,
         0.955,
-        rf"$N=128$  ·  $t=6.0$  ·  trajectory {trajectory_id}",
+        rf"$N=128$  |  $t=6.0$  |  trajectory {trajectory_id}",
         ha="center",
         va="top",
         fontsize=7.2,

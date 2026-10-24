@@ -41,8 +41,8 @@ from experiments.provenance import external_source
 
 OLD_CHECKPOINT = str(external_source('reference_anie_checkpoint'))
 OLD_CHECKPOINT_SHA = "7fdd7e521db2f5a70139ea550b46038d322b672319c17aebb920d1b95c0191ae"
-PENDING_VISUAL_STATEMENT = "图像外观须另行实际查看并记录VISUAL_QA.json。"
-COMPLETED_VISUAL_STATEMENT = "四张PNG已实际查看：两幅七方法七实测节点曲线和两幅8行74轴场板；固定ID100005/1045、t5/6/7/8及共同色阶保持，标签清晰、有限值未裁切。实际外观核验记录另由VISUAL_QA.json绑定。"
+PENDING_VISUAL_STATEMENT = "Figure appearance requires separate visual inspection recorded in VISUAL_QA.json."
+COMPLETED_VISUAL_STATEMENT = "Four PNGs were visually inspected: two curves with seven methods and seven measured nodes, and two 8-row, 74-axis field plates. Fixed IDs100005/1045, t5/6/7/8 and shared color scales are retained; labels are clear and finite values are not clipped. VISUAL_QA.json separately binds the appearance-inspection record."
 
 
 def read(path):
@@ -248,33 +248,33 @@ def metric(record, name):
 def render_result_record(root, package, inputs):
     """Write the complete measured W1 table with native budgets and figure links."""
     status = inputs["status"]
-    selection = ("训练发生声明的科学失败，无可评价模型。全部180条失败人口按原槽位保留。" if inputs["failed"] else
-                 f"ANIE实际完成{status['epoch']}轮、{status['updates']}次更新，采用第{status['best_epoch']}轮validation-MSE-best权重。")
-    lines = ["# W1：N300、76点、单初态、固定配方", "",
-        "比较GIFT、GIFT-N50、FNO2D、FNO3D、U-NO、U-Net和ANIE的真实单模型值；每方法一个声明种子，无跨seed标准差。",
-        "共同观测t5–8每0.04秒共76点，输入仅为每条轨迹自己的t5真实状态，主指标为future75逐帧relative L2均值，排除已知初态。",
-        "两个留出人口均已被查看，本次评价是非盲测的事后测量，未用于参数或模型选择；确认与探索人口分别报告。", "",
-        "ANIE状态与(x,y,t)坐标使用相同的space-major/time-minor token排列，训练和评价一致。保持NS架构、c=0/y_init条件路径、全76点物理MSE和原优化器/调度/早停。",
-        selection, f"ANIE训练进程墙钟：{inputs['training_process_seconds']:.3f}秒（{inputs['training_process_seconds']/3600:.4f}小时），含全部登记尝试、准备、训练、内部validation与checkpoint I/O。", "",
-        "GIFT使用0.08/0.48秒监督目标（名义目标0.1/0.5秒），内部RK4 dt=0.02，保存间隔0.04秒。U-NO监督20步至t5.80，U-Net监督4步至t5.16。GIFT-N50使用有序N300名单前50条，沿用阶段epoch但减少总更新。固定损失、监督范围和计算预算不同，不能把结果解释为等预算的纯架构比较。",
-        "ANIE仅参加W1；W2六方法保持其声明权重和结果。", ""]
+    selection = ("Training encountered a declared scientific failure, leaving no evaluable model. All 180 failed trajectories are retained in the original slot." if inputs["failed"] else
+                 f"ANIE completed {status['epoch']} epochs and {status['updates']} updates, using the validation-MSE-best checkpoint from epoch{status['best_epoch']}.")
+    lines = ["# W1: N300, 76 points, a single initial state and fixed recipes", "",
+        "Measured single-model values are compared for GIFT, GIFT-N50, FNO2D, FNO3D, U-NO, U-Net and ANIE; each method has one declared seed, without cross-seed standard deviations.",
+        "Shared observations cover t5–8 every 0.04 seconds for 76 points. Each trajectory receives only its own true t5 state; the primary metric is future75 mean framewise relative L2, excluding the known initial state.",
+        "Both held-out cohorts have been inspected. This evaluation is a non-blind post hoc measurement, not used for parameter or model selection; confirmation and exploratory cohorts are reported separately.", "",
+        "ANIE states and (x,y,t) coordinates share space-major/time-minor token order during training and evaluation. The NS architecture, c=0/y_init conditional path, physical MSE over all 76 points and original optimizer/scheduler/early stopping are retained.",
+        selection, f"ANIE training process wall time: {inputs['training_process_seconds']:.3f} seconds ({inputs['training_process_seconds']/3600:.4f} hours), including all registered attempts, preparation, training, internal validation and checkpoint I/O.", "",
+        "GIFT uses supervision targets of 0.08/0.48 seconds (nominal targets 0.1/0.5 seconds), internal RK4 dt=0.02 and saving every 0.04 seconds. U-NO is supervised for 20 steps through t5.80, and U-Net for 4 through t5.16. GIFT-N50 uses the first 50 trajectories in the ordered N300 list, retaining stage epochs but reducing total updates. Fixed losses, supervision coverage and computation budgets differ, so results do not represent an equal-budget architecture-only comparison.",
+        "ANIE participates only in W1; the six W2 methods retain their declared weights and results.", ""]
     labels = {spec['group']: spec['label'] for spec in plot.SPECS}
     for cohort in COHORTS:
         report = inputs["reports"][cohort]
-        lines += [f"## {cohort}", "", "| 方法 | Ntrain | seed | future75 mean relative L2 | t8 relative L2 | future MSE | 失败/180 |", "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
+        lines += [f"## {cohort}", "", "| Method | Ntrain | seed | future75 mean relative L2 | t8 relative L2 | future MSE | Failed/180 |", "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
         for spec in plot.SPECS:
             key = spec["group"]
             record = report["methods"][key]
             values = [metric(record, field) for field in ("future_mean_relative_l2", "t8_relative_l2", "future_mse")]
-            formatted = ["无总体值" if value is None else f"{value:.9g}" for value in values]
+            formatted = ["no aggregate value" if value is None else f"{value:.9g}" for value in values]
             lines.append(f"| {labels[key]} | {50 if key == 'GIFT-N50' else 300} | {record['seed']} | {' | '.join(formatted)} | {record['summary']['failed_count']}/180 |")
         figure_manifest = read(package / "figures" / cohort / "figure_manifest.json")
-        lines += ["", f"[完整数值报告]({(root/'w1_evaluation'/cohort/'numeric_report.json').as_posix()})", ""]
+        lines += ["", f"[Complete numeric report]({(root/'w1_evaluation'/cohort/'numeric_report.json').as_posix()})", ""]
         for preview in figure_manifest["figure_contract"]["field_previews"]:
             lines += [f"![{cohort} {Path(preview['path']).stem}]({(PROJECT/preview['path']).as_posix()})", ""]
-    lines += ["## 证据与图像", "", f"[发布包]({(package/'published.json').as_posix()})。曲线和场板沿用既有原稿绘图结构、方法、固定ID100005/1045和t5/6/7/8；残差为prediction−truth，有限值不裁切。",
-        "FINAL_TRAINING_AUDIT.json与FINAL_RESULT_AUDIT.json绑定真实训练槽位、各180人口、原始预测和范数重算；PUBLICATION.json核对发布包。图像外观须另行实际查看并记录VISUAL_QA.json。",
-        "所述实验是公开NS实现的固定配方任务迁移，不是原论文全部数据与设置的完整复现。"]
+    lines += ["## Evidence and figures", "", f"[Publication package]({(package/'published.json').as_posix()}). Curves and field plates retain the original manuscript plotting structure, methods, fixed IDs100005/1045 and t5/6/7/8; residuals are prediction−truth, without clipping finite values.",
+        "FINAL_TRAINING_AUDIT.json and FINAL_RESULT_AUDIT.json bind actual training slots, each 180-trajectory cohort, raw predictions and recomputed norms; PUBLICATION.json verifies the publication package. Figure appearance requires separate visual inspection recorded in VISUAL_QA.json.",
+        "This experiment transfers a fixed recipe from the public NS implementation to this task; it is not a complete reproduction of all data and settings in the original paper."]
     content = "\n".join(lines) + "\n"
     record_path = root / "RESULTS.md"
     if record_path.exists() and record_path.read_text(encoding="utf-8") == content.replace(PENDING_VISUAL_STATEMENT, COMPLETED_VISUAL_STATEMENT):
@@ -286,7 +286,7 @@ def measured_curve_table(report):
     """Render all seven real saved report nodes without re-evaluating a model."""
     method_keys = ("GIFT", "GIFT-N50", "fno2d", "uno", "unet", "anie_ns", "fno3d")
     indices = plot.nearest_times(np.asarray(report["absolute_times"]), plot.REQUESTED_TIMES)
-    lines = ["| 时间 | GIFT | GIFT-N50 | FNO2D | U-NO | U-Net | ANIE | FNO3D |",
+    lines = ["| Time | GIFT | GIFT-Lite | FNO-2D | U-NO | U-Net | ANIE | FNO-3D |",
              "| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |"]
     for index in indices:
         cells = []
@@ -294,14 +294,14 @@ def measured_curve_table(report):
             summary = report["methods"][key]["summary"]
             curve = summary.get("mean_relative_l2_by_time")
             value = curve[int(index)] if curve is not None and summary["failed_count"] == 0 else None
-            cells.append("无总体值" if value is None else f"{value:.6f}")
+            cells.append("no aggregate value" if value is None else f"{value:.6f}")
         lines.append(f"| {report['absolute_times'][int(index)]:g} | {' | '.join(cells)} |")
     return "\n".join(lines)
 
 
 def refresh_curve_tables(text, reports):
     """Update only the existing cohort time tables, retaining the record structure."""
-    pattern = r"(?m)^\| 时间 \| GIFT \| GIFT-N50 \| FNO2D \| U-NO \| U-Net \| ANIE \| FNO3D \|\n(?:^\|[^\n]*\|\n?)+"
+    pattern = r"(?m)^\| Time \| GIFT \| GIFT-Lite \| FNO-2D \| U-NO \| U-Net \| ANIE \| FNO-3D \|\n(?:^\|[^\n]*\|\n?)+"
     matches = list(re.finditer(pattern, text))
     if not matches:
         return text
@@ -314,39 +314,39 @@ def refresh_curve_tables(text, reports):
 
 def reconcile_record_wording(relative, text, root=None):
     """Keep final records precise about coordinates, exposure and source scope."""
-    text = text.replace("但其中两个评价人口的成绩已被查看", "但两个评价人口的成绩已被查看")
-    text = text.replace("确认集独立于训练和验证，但四种方法的结果此前已被查看，因此不是全部方法的盲测。",
-                        "两个评价人口均独立于训练和验证，成绩均已被查看，因此此次评价为非盲测的事后测量。")
-    text = text.replace("既有四方法结果在扩展前已知，故不是本次新盲确认", "两个评价人口的成绩均已被查看，故此次评价为非盲测的事后测量")
-    text = text.replace("原生token坐标与76个查询点", "与状态逐token一致的时空坐标排列及76个查询点")
+    text = text.replace("but the results of those two evaluation cohorts have been inspected", "but the results of both evaluation cohorts have been inspected")
+    text = text.replace("The confirmation set is independent of training and validation, but results for four methods were inspected previously, so it is not a blind test for all methods.",
+                        "Both evaluation cohorts are independent of training and validation, and both sets of results have been inspected; this evaluation is therefore a non-blind post hoc measurement.")
+    text = text.replace("results for the four existing methods were known before the extension, so this is not a new blind confirmation", "results of both evaluation cohorts have been inspected, so this evaluation is a non-blind post hoc measurement")
+    text = text.replace("native token coordinates and 76 query points", "spatiotemporal coordinates aligned token by token with states and 76 query points")
     if relative == "docs/RESULTS.md":
-        text = text.replace("# 当前单次固定配方 W1/W2 结果的解释（2026-10-05）", "# 当前单次固定配方 W1/W2 结果的解释")
-        text = re.sub(r"(?m)^- v6：(?=`w1_evaluation)", f"- 非ANIE方法及W2的数值来源（外部目录 `{BASE.as_posix()}`）：", text)
-        text = re.sub(r"(?m)^- v6：(?=`training)", f"- U-NO/U-Net的训练来源（外部目录 `{BASE.as_posix()}`）：", text)
-        text = re.sub(r"(?m)^- v6：", "- 声明运行目录中的来源：", text)
-        if root is not None and "- ANIE数值与训练来源" not in text:
-            marker = "- 项目："
-            source = f"- ANIE数值与训练来源（外部目录 `{root.as_posix()}`）：`w1_evaluation/confirmation/numeric_report.json`、`w1_evaluation/old_test/numeric_report.json`、`training/anie_ns_seed7/STATUS.json`、`HISTORY.json`、`best.pt`及`JOB_EVENTS.jsonl`。\n"
+        text = text.replace("# Interpretation of current single-run fixed-recipe W1/W2 results (2026-10-05)", "# Interpretation of current single-run fixed-recipe W1/W2 results")
+        text = re.sub(r"(?m)^- v6: (?=`w1_evaluation)", f"- Numerical sources for non-ANIE methods and W2 (external directory `{BASE.as_posix()}`): ", text)
+        text = re.sub(r"(?m)^- v6: (?=`training)", f"- Training sources for U-NO/U-Net (external directory `{BASE.as_posix()}`): ", text)
+        text = re.sub(r"(?m)^- v6: ", "- Sources in the declared run directories: ", text)
+        if root is not None and "- ANIE numerical and training sources" not in text:
+            marker = "- Project: "
+            source = f"- ANIE numerical and training sources (external directory `{root.as_posix()}`): `w1_evaluation/confirmation/numeric_report.json`, `w1_evaluation/old_test/numeric_report.json`, `training/anie_ns_seed7/STATUS.json`, `HISTORY.json`, `best.pt` and `JOB_EVENTS.jsonl`.\n"
             text = text.replace(marker, source + marker)
-        text = text.replace("本次没有选择 validation-best：", "该固定配方选择终态：")
-        text = text.replace("此前CPU测试已验证", "CPU测试验证了")
-        text = text.replace("本记录没有重新推理或新增训练来改变这些结果。", "上述验证限定于这些已声明模型的来源和接口。")
-        text = text.replace("本次按当前标准保留，并改为N300、单初态", "本实验采用该配置，使用N300、单初态")
+        text = text.replace("This run did not select validation-best: ", "This fixed recipe selects the terminal state: ")
+        text = text.replace("Previous CPU tests verified", "CPU tests verified")
+        text = text.replace("This record did not rerun inference or add training to change these results.", "The verification above is limited to the sources and interfaces of these declared models.")
+        text = text.replace("Retained under the current standard and changed to N300 with a single initial state", "This experiment uses this configuration with N300 and a single initial state")
     if relative == "docs/EXTERNAL_ADAPTATIONS.md":
-        text = text.replace("## 当前单初態 W1/W2 profile（2026-10-05）", "## 当前单初態 W1/W2 profile")
-        text = text.replace("[v5实施记录]", "[单次固定配方实现]")
-        text = re.sub(r"当前新三模型已完成各自固定训练，[^\n]*完整范围见 \[当前成本\]\(PERFORMANCE\.md\)。",
-            "各方法的训练与评价来源绑定于对应结果包，独立训练和数值审计见声明运行目录；实际计算成本及范围见 [PERFORMANCE.md](PERFORMANCE.md)。", text)
+        text = text.replace("## Current single-initial-state W1/W2 profile (2026-10-05)", "## Current single-initial-state W1/W2 profile")
+        text = text.replace("[v5 implementation record]", "[Single-run fixed-recipe implementation]")
+        text = re.sub(r"The three new models have completed their fixed training;[^\n]*full scope is in \[current costs\]\(PERFORMANCE\.md\)\.",
+            "Training and evaluation sources for each method are bound to its result package; independent training and numerical audits are in the declared run directories. Actual computation costs and scope are in [PERFORMANCE.md](PERFORMANCE.md).", text)
     if relative == "docs/CHECKPOINTS.md" and root is not None:
-        text = text.replace("模型身份、配方、种子和数据绑定存于", "其余六方法的模型身份、配方、种子和数据绑定存于") if "其余六方法的模型身份" not in text else text
-        marker = "以下为外部实验文件，不包含在Git结果包中。"
-        if "ANIE训练配置与模型身份存于" not in text:
-            text = text.replace(marker, f"ANIE训练配置与模型身份存于 `{(root/'PROTOCOL_LOCK.json').as_posix()}` 及 `{(root/'training/anie_ns_seed7/ATTEMPT.json').as_posix()}`。" + marker)
+        text = text.replace("Model identities, recipes, seeds and data bindings are stored in", "Model identities, recipes, seeds and data bindings for the other six methods are stored in") if "Model identities, recipes, seeds and data bindings for the other six methods" not in text else text
+        marker = "The following external experiment files are not included in the Git result package."
+        if "ANIE training configuration and model identity are stored in" not in text:
+            text = text.replace(marker, f"ANIE training configuration and model identity are stored in `{(root/'PROTOCOL_LOCK.json').as_posix()}` and `{(root/'training/anie_ns_seed7/ATTEMPT.json').as_posix()}`. " + marker)
     if relative == "docs/TRAINING_PROTOCOL.md" and root is not None:
-        text = text.replace("配置来源为", "其余方法配置来源为") if "其余方法配置来源为" not in text else text
-        if "ANIE坐标和训练配置来源为" not in text:
+        text = text.replace("Configuration sources are", "Configuration sources for the other methods are") if "Configuration sources for the other methods are" not in text else text
+        if "ANIE coordinate and training configuration sources are" not in text:
             marker = "## Independent N1000"
-            sentence = f"ANIE坐标和训练配置来源为 `{(root/'PROTOCOL_LOCK.json').as_posix()}`，具体源码适配见 [ANIE实现说明](ANIE_ADAPTATION.md)。\n\n"
+            sentence = f"ANIE coordinate and training configuration sources are `{(root/'PROTOCOL_LOCK.json').as_posix()}`; source adaptations are detailed in [ANIE implementation notes](ANIE_ADAPTATION.md).\n\n"
             if marker in text:
                 text = text.replace(marker, sentence + marker)
             else:
@@ -363,28 +363,28 @@ def document_contents(root, inputs):
     epoch = inputs["status"].get("epoch", inputs["status"].get("completed_epochs", 0))
     best = inputs["status"].get("best_epoch")
     seconds = inputs["training_process_seconds"]
-    path = inputs["checkpoint"].as_posix() if inputs["checkpoint"] is not None else "无可评价权重"
-    digest = inputs["checkpoint_hash"].lower() if inputs["checkpoint_hash"] is not None else "无"
+    path = inputs["checkpoint"].as_posix() if inputs["checkpoint"] is not None else "no evaluable checkpoint"
+    digest = inputs["checkpoint_hash"].lower() if inputs["checkpoint_hash"] is not None else "none"
     records = {key: inputs["reports"][key]["methods"]["anie_ns"] for key in COHORTS}
     changed = {}
     for relative in DOCS:
         before = (PROJECT / relative).read_text(encoding="utf-8")
         after = before.replace(OLD_PACKAGE_NAME, PACKAGE_NAME)
         for old, new in (
-            ("该人口的四种方法结果此前已被查看", "两个评价人口的结果已被查看"),
-            ("确认集四方法成绩此前已被查看", "两个人口的成绩已被查看"),
-            ("四方法成绩此前已被查看", "两个评价人口的成绩已被查看"),
-            ("其中确认集的部分方法结果此前已被查看", "两个评价人口的结果均已被查看"),
-            ("确认集的部分方法结果此前已被查看", "两个评价人口的结果均已被查看"),
+            ("Results for four methods in this cohort were inspected previously", "Results of both evaluation cohorts have been inspected"),
+            ("Confirmation results for four methods were inspected previously", "Results of both cohorts have been inspected"),
+            ("Results for four methods were inspected previously", "Results of both evaluation cohorts have been inspected"),
+            ("Results for some methods in the confirmation set were inspected previously", "Results of both evaluation cohorts have been inspected"),
+            ("Results for some methods in the confirmation set were inspected previously", "Results of both evaluation cohorts have been inspected"),
             ("some method results on it had already been examined", "results on both evaluation populations had already been examined"),
         ):
             after = after.replace(old, new)
         after = re.sub(r"w1_single76_n300_(confirmation|old_test)_(\w+)_20261005\.png",
                        r"w1_aligned_anie_single76_n300_\1_\2_20261006.png", after)
         after = after.replace(OLD_CHECKPOINT, path).replace(OLD_CHECKPOINT_SHA, digest)
-        for old, new in (("actual1028", f"actual{epoch}"), ("第1028轮", f"第{epoch}轮"),
-                         ("至1028轮", f"至{epoch}轮"), ("在1028轮", f"在{epoch}轮"), ("训练1028轮", f"训练{epoch}轮"),
-                         ("10280次更新", f"{10*epoch}次更新"), ("第28轮", f"第{best}轮"),
+        for old, new in (("actual1028", f"actual{epoch}"), ("epoch1028", f"epoch{epoch}"),
+                         ("through epoch1028", f"through epoch{epoch}"), ("at epoch1028", f"at epoch{epoch}"), ("training for 1028 epochs", f"training for {epoch} epochs"),
+                         ("10280 updates", f"{10*epoch} updates"), ("epoch28", f"epoch{best}"),
                          ("epoch28", f"epoch{best}")):
             after = after.replace(old, new)
         if relative == "EXPERIMENTS.md":
@@ -396,111 +396,111 @@ def document_contents(root, inputs):
             for match, cohort in reversed(list(zip(matches, COHORTS))):
                 record = records[cohort]
                 values = [metric(record, key) for key in ("future_mean_relative_l2", "t8_relative_l2", "future_mse")]
-                number = lambda value: "无总体值" if value is None else f"{value:.6f}"
+                number = lambda value: "no aggregate value" if value is None else f"{value:.6f}"
                 row = f"| 64 | ANIE | 300 | 7 | {' | '.join(map(number, values))} | {record['summary']['failed_count']}/180 |"
                 after = after[:match.start()] + row + after[match.end():]
-            sentence = "ANIE按space-major/time-minor顺序组织状态与时空坐标，同一token的场特征和(x,y,t)严格对应；训练与评价使用相同排列。"
+            sentence = "ANIE arranges states and spatiotemporal coordinates in space-major/time-minor order, with field features and (x,y,t) aligned within each token; training and evaluation use the same order."
             if sentence not in after:
-                after = after.replace("ANIE使用全76点的MSE。", "ANIE使用全76点的MSE。" + sentence)
+                after = after.replace("ANIE uses MSE over all 76 points.", "ANIE uses MSE over all 76 points. " + sentence)
             after = refresh_curve_tables(after, inputs["reports"])
             manifests = [root / "original_style_figures/W1" / cohort / "figure_manifest.json" for cohort in COHORTS]
             if all(path.is_file() for path in manifests):
                 maximum = max(read(path)["details"]["color_scales"]["selected_residual_maximum_absolute_value"] for path in manifests)
-                after = after.replace("最大残差21.354568", f"最大残差{maximum:.6f}")
+                after = after.replace("maximum residual 21.354568", f"maximum residual {maximum:.6f}")
         if relative == "docs/PERFORMANCE.md":
-            after = re.sub(r"^\| ANIE，训练\d+轮、MSE-best epoch\d+ \| 20810\.388 \| 346\.84 \|$",
-                           f"| ANIE，训练{epoch}轮、MSE-best epoch{best} | {seconds:.3f} | {seconds/60:.2f} |", after, flags=re.M)
+            after = re.sub(r"^\| ANIE, training for \d+ epochs, MSE-best epoch\d+ \| 20810\.388 \| 346\.84 \|$",
+                           f"| ANIE, training for {epoch} epochs, MSE-best epoch{best} | {seconds:.3f} | {seconds/60:.2f} |", after, flags=re.M)
             reused_seconds = inputs.get("unchanged_training_seconds")
             total = (reused_seconds if reused_seconds is not None else 53591.249 - 20810.388) + seconds
-            after = after.replace("53591.249秒（14.8865小时）", f"{total:.3f}秒（{total/3600:.4f}小时）")
-            after = after.replace("完整范围记录在后者目录的 `FINAL_COST_CLOSURE.json`；",
-                f"ANIE训练成本来自 `{(root/'JOB_EVENTS.jsonl').as_posix()}`（SHA-256 `{inputs['events_hash'].lower()}`）。其他方法成本范围记录在原目录的 `FINAL_COST_CLOSURE.json`；")
+            after = after.replace("53591.249 seconds (14.8865 hours)", f"{total:.3f} seconds ({total/3600:.4f} hours)")
+            after = after.replace("The full scope is recorded in `FINAL_COST_CLOSURE.json` in the latter directory; ",
+                f"ANIE training cost comes from `{(root/'JOB_EVENTS.jsonl').as_posix()}` (SHA-256 `{inputs['events_hash'].lower()}`). Cost scope for other methods is recorded in `FINAL_COST_CLOSURE.json` in the original directory; ")
         if relative == "docs/EXTERNAL_ADAPTATIONS.md":
-            after = re.sub(r"^\| ANIE \|.*$", "| ANIE | 使用官方commit2071ad7的NS架构及 `aligned_ns_single_v1`；训练c=0/y_init路径；状态与(x,y,t)统一space-major/time-minor token排列；functional dropout绑定training，评价关闭dropout。共同76查询与micro6/effective32为任务/显存适配。仅参加W1。 |", after, flags=re.M)
-            after = after.replace("四模型直接复用v5；新增U-NO/U-Net由公开仓库固定提交构造，外部磁盘源码未编辑。",
-                "各方法由固定公开源码构造，外部磁盘源码保持只读；ANIE的坐标排列及逐项修改见 [ANIE实现说明](ANIE_ADAPTATION.md)。")
+            after = re.sub(r"^\| ANIE \|.*$", "| ANIE | Uses the official commit2071ad7 NS architecture and `aligned_ns_single_v1`; training c=0/y_init path; states and (x,y,t) share space-major/time-minor token order; functional dropout follows training mode and is disabled during evaluation. Shared 76 queries and micro6/effective32 adapt to the task/memory budget. W1 only. |", after, flags=re.M)
+            after = after.replace("Four models reuse v5 directly; new U-NO/U-Net models are constructed from fixed public repository commits, without editing external on-disk source code.",
+                "Each method is constructed from fixed public source code, with external on-disk sources kept read-only; ANIE coordinate order and individual modifications are detailed in [ANIE implementation notes](ANIE_ADAPTATION.md).")
         if relative == "docs/W1_W2_PROTOCOL.md":
-            after = after.replace("GIFT、FNO2D、FNO3D与ANIE的训练配置位于", "GIFT、FNO2D、FNO3D的训练配置位于")
+            after = after.replace("Training configurations for GIFT, FNO2D, FNO3D and ANIE are in", "Training configurations for GIFT, FNO2D and FNO3D are in")
             if (root/'PROTOCOL_LOCK.json').as_posix() not in after:
-                after = after.replace("真实目录名称用于定位来源；", f"ANIE的训练及坐标配置位于`{(root/'PROTOCOL_LOCK.json').as_posix()}`。真实目录名称用于定位来源；")
-            if "状态与时空坐标统一space-major/time-minor排列" not in after:
-                after = after.replace("ANIE 用物理 MSE，不改为 relative L2。", "ANIE 用物理 MSE，不改为 relative L2。状态与时空坐标统一space-major/time-minor排列，同一token严格对应同一空间位置和查询时间，训练及评价一致。")
+                after = after.replace("Actual directory names locate sources; ", f"ANIE training and coordinate configurations are in `{(root/'PROTOCOL_LOCK.json').as_posix()}`. Actual directory names locate sources; ")
+            if "States and spatiotemporal coordinates share space-major/time-minor order" not in after:
+                after = after.replace("ANIE uses physical MSE, without changing it to relative L2. ", "ANIE uses physical MSE, without changing it to relative L2. States and spatiotemporal coordinates share space-major/time-minor order, with each token corresponding to the same spatial position and query time during training and evaluation.")
         if relative == "docs/RESULTS.md":
-            anchor = "W1/W2权重、完整raw HDF及优化器/随机状态保存在声明的外部实验目录"
-            if "ANIE的训练与两个W1人口的数值审计绑定于" not in after:
-                after = after.replace(anchor, f"ANIE的训练与两个W1人口的数值审计绑定于 `{root.as_posix()}`；其余模型和W2的来源见各自结果清单。\n\n" + anchor)
+            anchor = "W1/W2 weights, complete raw HDF files and optimizer/random states remain in declared external experiment directories"
+            if "ANIE training and numerical audits for both W1 populations are bound to" not in after:
+                after = after.replace(anchor, f"ANIE training and numerical audits for both W1 populations are bound to `{root.as_posix()}`; sources for other models and W2 are in their result inventories.\n\n" + anchor)
         if relative == "docs/VALIDATION.md":
-            if "六个既有模型及W2的完整预测重算入口" not in after:
-                after = after.replace("完整预测重算入口是 `scripts.audit_w1_w2_single`", "六个既有模型及W2的完整预测重算入口是 `scripts.audit_w1_w2_single`")
-            anchor = "结果证据见 [W1来源清单]"
-            if "ANIE的时空token逐项对应与训练配置由" not in after:
-                after = after.replace(anchor, f"ANIE的时空token逐项对应与训练配置由 [ANIE实现说明](ANIE_ADAPTATION.md) 声明，其完整训练/数值审计来自 `{root.as_posix()}` 的 `FINAL_TRAINING_AUDIT.json`、`FINAL_RESULT_AUDIT.json`。\n\n" + anchor)
+            if "The complete prediction recomputation entry point for the six existing models and W2" not in after:
+                after = after.replace("The complete prediction recomputation entry point is `scripts.audit_w1_w2_single`", "The complete prediction recomputation entry point for the six existing models and W2 is `scripts.audit_w1_w2_single`")
+            anchor = "Result evidence appears in the [W1 provenance manifest]"
+            if "ANIE's tokenwise space-time correspondence and training configuration are declared in" not in after:
+                after = after.replace(anchor, f"ANIE's tokenwise space-time correspondence and training configuration are declared in [ANIE implementation notes](ANIE_ADAPTATION.md); complete training/numerical audits come from `{root.as_posix()}` files `FINAL_TRAINING_AUDIT.json` and `FINAL_RESULT_AUDIT.json`.\n\n" + anchor)
         if relative == "docs/EXPERIMENT_EXECUTION.md":
-            anchor = "独立评价接口为 `experiments.additional.w1_extended_evaluate`"
+            anchor = "The independent evaluation interface is `experiments.additional.w1_extended_evaluate`"
             if "ANIE_ADAPTATION.md" not in after:
-                after = after.replace(anchor, f"ANIE配置、模型选择和W1数值绑定于 `{root.as_posix()}`；其时空token排列见 [ANIE实现说明](ANIE_ADAPTATION.md)。其他方法与W2使用各自声明目录。\n\n" + anchor)
+                after = after.replace(anchor, f"ANIE configuration, model selection and W1 values are bound to `{root.as_posix()}`; its spatiotemporal token order is detailed in [ANIE implementation notes](ANIE_ADAPTATION.md). Other methods and W2 use their declared directories.\n\n" + anchor)
         if relative == "docs/SETUP.md":
-            if "ANIE使用" not in after or root.as_posix() not in after:
-                after = after.replace("模型文件与SHA见", f"ANIE使用 `{root.as_posix()}` 中声明的坐标配置和训练权重。模型文件与SHA见")
+            if "ANIE uses" not in after or root.as_posix() not in after:
+                after = after.replace("Model files and SHAs are in", f"ANIE uses `{root.as_posix()}` declared coordinate configuration and training weights. Model files and SHAs are in")
         after = reconcile_record_wording(relative, after, root)
         if after != before:
             if not inputs["failed"] and inputs["status"].get("terminal_reason") != "native_early_stopping":
-                after = after.replace(f"实际在第{epoch}轮早停", f"实际完成{epoch}轮上限")
-                after = after.replace(f"训练在第{epoch}轮早停", f"训练完成{epoch}轮上限")
-                after = after.replace(f"训练在第{epoch}轮依原早停规则终止", f"训练完成{epoch}轮上限")
-                after = after.replace(f"依patience1000规则在{epoch}轮终止", f"达到{epoch}轮上限终止")
-                after = after.replace(f"按原早停规则训练至{epoch}轮", f"按预定上限训练至{epoch}轮")
+                after = after.replace(f"actually stopped early at epoch{epoch}", f"actually completed the {epoch}-epoch limit")
+                after = after.replace(f"training stopped early at epoch{epoch}", f"training completed the {epoch}-epoch limit")
+                after = after.replace(f"training terminated at epoch{epoch} under the original early-stopping rule", f"training completed the {epoch}-epoch limit")
+                after = after.replace(f"terminated at epoch{epoch} under the patience1000 rule", f"terminated at the {epoch}-epoch limit")
+                after = after.replace(f"trained through epoch{epoch} under the original early-stopping rule", f"trained through epoch{epoch} under the predefined limit")
             changed[relative] = (before, after)
     if inputs["failed"]:
-        failure_description = "ANIE训练发生声明的科学数值或资源失败；保留唯一seed7槽位，两个W1人口均按180/180失败记录，无总体精度值，不更换种子或参数。"
+        failure_description = "ANIE training encountered a declared scientific numerical or resource failure; the unique seed7 slot is retained, with 180/180 failures recorded for both W1 cohorts and no aggregate accuracy value, without replacing seeds or parameters."
         for relative, (before, after) in list(changed.items()):
-            after = after.replace(f"第{best}轮", "无可评价权重").replace(f"epoch{best}", "无可评价权重")
-            after = after.replace("七种方法均有180/180条有限轨迹", "其余六种方法有180/180条有限轨迹，ANIE记录180/180失败")
+            after = after.replace(f"epoch{best}", "no evaluable checkpoint").replace(f"epoch{best}", "no evaluable checkpoint")
+            after = after.replace("all seven methods retain 180/180 finite trajectories", "the other six methods retain 180/180 finite trajectories; ANIE records 180/180 failures")
             after = after.replace("All seven methods retain 180/180 finite trajectories.", "Six methods retain 180/180 finite trajectories; ANIE retains its failed 180-trajectory slot.")
-            after = after.replace("所有方法均0/180非有限预测", "其余六方法均0/180非有限预测，ANIE记录180/180失败")
-            after = after.replace("W1七方法、W2六方法在两评价人口相应任务中均为0/180失败。",
-                                  "W1中ANIE记录180/180失败，其余六方法均0/180失败；W2六方法均0/180失败。")
+            after = after.replace("All methods have 0/180 non-finite predictions", "The other six methods have 0/180 non-finite predictions; ANIE records 180/180 failures")
+            after = after.replace("All seven W1 methods and six W2 methods have 0/180 failures on their respective tasks in both populations.",
+                                  "In W1, ANIE records 180/180 failures and the other six methods have 0/180 failures; all six W2 methods have 0/180 failures.")
             if relative == "EXPERIMENTS.md":
                 after = re.sub(r"^\| ANIE \| 300 \| 7 \|.*$",
-                    "| ANIE | 300 | 7 | 上限5000；effective32/micro6 | NS Adam lr1e-4/wd1e-4、延迟CosineT101；科学失败，无可评价模型 | 全76点原单位MSE，含初态重建；保留唯一失败槽位 |", after, flags=re.M)
-                after = re.sub(r"ANIE使用无可评价权重验证MSE最佳权重，训练在第\d+轮早停。", failure_description, after)
+                    "| ANIE | 300 | 7 | limit5000; effective32/micro6 | NS Adam lr1e-4/wd1e-4, delayed CosineT101; scientific failure, no evaluable model | Original-unit MSE over all 76 points, including initial-state reconstruction; retain the unique failure slot |", after, flags=re.M)
+                after = re.sub(r"ANIE uses no evaluable checkpoint validation-MSE-best weights, with training stopped early at epoch\d+\.", failure_description, after)
             if relative == "docs/RESULTS.md":
-                after = re.sub(r"ANIE使用无可评价权重验证MSE最优模型，训练在第\d+轮依原早停规则终止；ANIE仅参加W1。",
-                               failure_description + "ANIE仅参加W1。", after)
+                after = re.sub(r"ANIE uses its best validation-MSE model from no evaluable checkpoint; training stopped at epoch\d+ under the original early-stopping rule\. ANIE participates only in W1\.",
+                               failure_description + "ANIE participates only in W1.", after)
             if relative == "docs/CHECKPOINTS.md":
-                after = re.sub(r"^\| ANIE \|.*$", "| ANIE | 无可评价权重 | 无 | seed7科学失败；仅W1 |", after, flags=re.M)
-                after = re.sub(r"ANIE依原NS validation-MSE-best规则选无可评价权重，按原早停规则训练至\d+轮。", failure_description, after)
+                after = re.sub(r"^\| ANIE \|.*$", "| ANIE | no evaluable checkpoint | none | seed7 scientific failure; W1 only |", after, flags=re.M)
+                after = re.sub(r"ANIE selects no evaluable checkpoint under the original NS validation-MSE-best rule, training through epoch\d+ under the original early-stopping rule\.", failure_description, after)
             if relative == "docs/TRAINING_PROTOCOL.md":
                 after = re.sub(r"^\| ANIE \|.*$",
-                    "| ANIE | seed7，effective batch32/micro6，Adam lr1e-4/wd1e-4，延迟CosineT101，上限5000轮；科学失败，无可评价模型 | 官方NS训练c=0/y_init路径，原单位全76点MSE，含初态重建；仅W1。 |", after, flags=re.M)
+                    "| ANIE | seed7, effective batch32/micro6, Adam lr1e-4/wd1e-4, delayed CosineT101, limit5000 epochs; scientific failure, no evaluable model | Official NS training c=0/y_init path, original-unit MSE over all 76 points, including initial-state reconstruction; W1 only. |", after, flags=re.M)
             if relative == "docs/PERFORMANCE.md":
-                after = re.sub(r"^\| ANIE，训练\d+轮、MSE-best 无可评价权重 \|.*$",
-                               f"| ANIE，科学失败 | {seconds:.3f} | {seconds/60:.2f} |", after, flags=re.M)
+                after = re.sub(r"^\| ANIE, training for \d+ epochs, MSE-best no evaluable checkpoint \|.*$",
+                               f"| ANIE, scientific failure | {seconds:.3f} | {seconds/60:.2f} |", after, flags=re.M)
             if relative == "docs/W1_W2_PROTOCOL.md":
-                after = re.sub(r"ANIE上限5000轮、每轮10次更新；实际在第\d+轮早停，共\d+次更新，使用无可评价权重验证MSE最佳权重。",
-                    f"ANIE上限5000轮，科学失败前实际完成{epoch}轮、记录{inputs['status'].get('updates', 0)}次更新，无可评价权重，保留唯一seed7槽位。", after)
+                after = re.sub(r"ANIE has a limit of 5000 epochs and 10 updates per epoch; actually stopped early at epoch\d+, with \d+ updates, using no evaluable checkpoint validation-MSE-best weights\.",
+                    f"ANIE has a limit of 5000 epochs, completed {epoch} epochs before scientific failure and recorded {inputs['status'].get('updates', 0)} updates, with no evaluable checkpoint; the unique seed7 slot is retained.", after)
             if relative in {"EXPERIMENTS.md", "docs/RESULTS.md", "docs/TRAINING_PROTOCOL.md", "docs/CHECKPOINTS.md",
                             "docs/W1_W2_PROTOCOL.md"}:
                 after += "\n" + failure_description + "\n"
             changed[relative] = (before, after)
-    adaptation = f"""# ANIE：时空坐标与状态token对应
+    adaptation = f"""# ANIE: alignment of spatiotemporal coordinates and state tokens
 
-ANIE使用作者公开仓库 [emazap7/ANIE](https://github.com/emazap7/ANIE)，固定提交 `2071ad709b260a6c305450affcf7168fd825f692`，source profile为 `aligned_ns_single_v1`、condition为 `native`。使用者自行下载官方源码并按照 [外部适配说明](EXTERNAL_ADAPTATIONS.md) 在仓库外完成适配；GIFT仓库只保留文字说明、来源引用和通用外部模块加载接口。
+ANIE uses the authors' public repository [emazap7/ANIE](https://github.com/emazap7/ANIE), pinned to commit `2071ad709b260a6c305450affcf7168fd825f692`, with source profile `aligned_ns_single_v1` and condition `native`. Users download the official source and adapt it outside this repository following [external adaptation notes](EXTERNAL_ADAPTATIONS.md); the GIFT repository retains only textual instructions, source references and generic external-module loading interfaces.
 
-状态张量按空间优先、时间次优顺序展平。空间索引s、时间索引j对应token `k=s*T+j`；token的状态特征、空间坐标和时间坐标均使用该索引。求解器内部各次更新保持同一排列，解码前按其逆排列还原。训练、validation和W1推理采用同一配置。
+The state tensor is flattened in space-major/time-minor order. Spatial index s and time index j map to token `k=s*T+j`; state features, spatial coordinates and time coordinates use the same token index. Every internal solver update retains this order, which is inverted before decoding. Training, validation and W1 inference use the same configuration.
 
-| 外部位置或项目接口 | 调整及必要性 |
+| External location or project interface | Adjustment and rationale |
 | --- | --- |
-| 使用者的外部ANIE运行接口 | 明确 `aligned_ns_single_v1` 配置；采用native条件路径，训练控制来源沿用官方NS实现。该接口文件保存在GIFT仓库目录外。 |
-| 外部适配记录及 [官方solver](https://github.com/emazap7/ANIE/blob/2071ad709b260a6c305450affcf7168fd825f692/IE_source/Attentional_IE_solver.py) | 按文字说明将空间和时间坐标与状态统一排列；保留原架构、注意力、积分迭代和输出解码。完整源码补丁不在GIFT仓库中分发。 |
-| [官方attention实现](https://github.com/emazap7/ANIE/blob/2071ad709b260a6c305450affcf7168fd825f692/IE_source/Galerkin_transformer.py) | evaluation时关闭functional attention dropout，训练概率保持原值；使用者在自己的外部代码中完成修改。 |
-| `training/w1_single_train.py` | 允许新对齐profile通过配置校验并按该profile构造原网络；既有控制器、全76点物理MSE、optimizer/scheduler、同次validation-MSE-best及原早停规则保持；不增加选参或种子。 |
+| User's external ANIE runtime interface | Declares `aligned_ns_single_v1`, uses the native conditional path and retains training control from the official NS implementation. This interface file is kept outside the GIFT repository. |
+| External adaptation record and [official solver](https://github.com/emazap7/ANIE/blob/2071ad709b260a6c305450affcf7168fd825f692/IE_source/Attentional_IE_solver.py) | Align spatial and temporal coordinates with state order according to the textual instructions; retain the original architecture, attention, integral iterations and output decoder. Full source patches are not distributed in the GIFT repository. |
+| [Official attention implementation](https://github.com/emazap7/ANIE/blob/2071ad709b260a6c305450affcf7168fd825f692/IE_source/Galerkin_transformer.py) | Disable functional attention dropout during evaluation while retaining its original training probability; users apply the change in their own external code. |
+| `training/w1_single_train.py` | Allow the new aligned profile through configuration validation and construct the original network using that profile; retain the existing controller, physical MSE over all 76 points, optimizer/scheduler, same-run validation-MSE-best selection and original early-stopping rule, without adding parameter selection or seeds. |
 
-已登记的functional attention dropout调整在训练时保留原概率，在evaluation时关闭，与模块training状态一致。未增加归一化、空间decoder修改、初态硬锚定、辅助重建或递归机制。
+The registered functional attention dropout adjustment retains the original probability during training and disables dropout during evaluation, following the module training state. No normalization, spatial decoder modification, hard initial-state anchoring, auxiliary reconstruction or recursion is added.
 
-训练数据为共同N300名单和20条validation，t5–8每0.04秒共76点。输入仅为每条轨迹t5真场；NS训练和评价均使用c=0/y_init条件路径。seed7，effective batch32、micro6，Adam lr1e-4/wd1e-4，延迟CosineT101，eta_min1e-9，上限5000轮、patience1000。{"训练发生科学失败，无可评价权重；全部失败人口保留。" if inputs['failed'] else f"实际完成{epoch}轮、{10*epoch}次更新，选择第{best}轮；"}训练进程墙钟{seconds:.3f}秒。
+Training uses the shared N300 list and 20 validation trajectories, with 76 points over t5–8 every 0.04 seconds. Each trajectory receives only its true t5 field; NS training and evaluation use the c=0/y_init conditional path. seed7, effective batch32, micro6, Adam lr1e-4/wd1e-4, delayed CosineT101, eta_min1e-9, limit5000 epochs and patience1000. {"Training encountered a scientific failure, with no evaluable checkpoint; all failed trajectories are retained. " if inputs['failed'] else f"Completed {epoch} epochs and {10*epoch} updates, selecting epoch{best}; "}Training process wall time was {seconds:.3f} seconds.
 
-权重：`{path}`，SHA-256 `{digest}`。完整训练和数值来源：`{root.as_posix()}`。W1两人口各180条单列，主指标排除已知初态，只取future75。ANIE不参加W2。该实验描述固定配方在本任务的表现，不作为原论文数据与全部设置的完整复现。
+Checkpoint: `{path}`, SHA-256 `{digest}`. Complete training and numerical sources: `{root.as_posix()}`. Both 180-trajectory W1 cohorts are reported separately; the primary metric excludes the known initial state and uses future75 only. ANIE does not participate in W2. This experiment describes a fixed recipe on this task, rather than fully reproducing all data and settings of the original paper.
 """
     adaptation_path = PROJECT / "docs/ANIE_ADAPTATION.md"
     previous_adaptation = adaptation_path.read_text(encoding="utf-8") if adaptation_path.exists() else None
@@ -585,7 +585,7 @@ def build_document_audit(root, package):
                 raise ValueError("linked field preview differs from figure source manifest")
     experiment_record = (PROJECT / "EXPERIMENTS.md").read_text(encoding="utf-8")
     cohort_tables = {}
-    table_count = experiment_record.count("| 时间 | GIFT | GIFT-N50 | FNO2D | U-NO | U-Net | ANIE | FNO3D |")
+    table_count = experiment_record.count("| Time | GIFT | GIFT-Lite | FNO-2D | U-NO | U-Net | ANIE | FNO-3D |")
     if table_count not in (1, 2):
         raise ValueError("the current W1 record must retain one or two declared cohort time tables")
     for cohort in COHORTS:
@@ -624,7 +624,7 @@ def build_document_audit(root, package):
             precision="six decimal places for the record; full precision for curve source CSV")
     for relative in DOCS:
         content = (PROJECT / relative).read_text(encoding="utf-8")
-        if "原生token坐标" in content or re.search(r"(?m)^- v[56]：", content):
+        if "native token coordinates" in content or re.search(r"(?m)^- v[56]:", content):
             raise ValueError(f"current record retains a superseded coordinate statement or development label: {relative}")
     result = dict(schema="gift.anie-coordinate-refresh.document-audit.v1", status="passed",
         documents=documents, latest_result_references=references, publication_integrity=integrity,

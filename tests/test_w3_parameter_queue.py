@@ -61,7 +61,7 @@ def test_verified_actual_trainer_matches_when_wrapper_has_exited(tmp_path):
 
 def test_process_inventory_explicit_utf8_preserves_command_text(monkeypatch):
     """Non-ASCII command lines survive the read-only PowerShell transport without replacement decoding."""
-    row = dict(ProcessId=1234, ParentProcessId=12, CommandLine='python -m training.train_pinn --output "D:/试验记录/run"')
+    row = dict(ProcessId=1234, ParentProcessId=12, CommandLine='python -m training.train_pinn --output "D:/experiment_Δ/run"')
     def inventory(command, **options):
         assert "[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new($false)" in command[-1]
         assert "Where-Object" in command[-1] and "python(?:w)?" in command[-1]

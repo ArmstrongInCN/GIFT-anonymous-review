@@ -1,52 +1,52 @@
-# GIFT execution efficiency / GIFT 计算效率
+# GIFT execution efficiency
 
-## W1/W2 配方与实测成本
+## W1/W2 recipes and measured costs
 
-[N300/76点协议](W1_W2_PROTOCOL.md) 的GIFT与GIFT-Lite训练采用eager执行，监督时距0.08/0.48秒、内部RK4 dt = 0.02、观测保存间隔0.04秒。N1000独立控制器的auto/cuda-graph策略和加速基准在下节单独说明。
+GIFT and GIFT-Lite training under the [N300/76-point protocol](W1_W2_PROTOCOL.md) uses eager execution, supervision horizons of 0.08/0.48 seconds, internal RK4 dt = 0.02 and observation-saving interval 0.04 seconds. The independent N1000 controller's auto/cuda-graph policy and acceleration benchmarks are described separately below.
 
-| 方法 | 单模型训练进程（秒） | 分钟 |
+| Method | Single-model training process (seconds) | Minutes |
 | --- | ---: | ---: |
 | FNO-2D | 5482.334 | 91.37 |
 | FNO-3D | 6104.994 | 101.75 |
-| GIFT N300，生成元与分支合计 | 10296.856 | 171.61 |
-| ANIE，训练1029轮、MSE-best epoch29 | 21176.742 | 352.95 |
-| U-Net N300，500轮 | 652.677 | 10.88 |
-| U-NO N300，500轮 | 8332.408 | 138.87 |
-| GIFT-Lite，生成元与分支合计 | 1911.591 | 31.86 |
+| GIFT N300, generator and branch combined | 10296.856 | 171.61 |
+| ANIE, training for 1029 epochs, MSE-best epoch29 | 21176.742 | 352.95 |
+| U-Net N300, 500 epochs | 652.677 | 10.88 |
+| U-NO N300, 500 epochs | 8332.408 | 138.87 |
+| GIFT-Lite, generator and branch combined | 1911.591 | 31.86 |
 
-七方法训练进程合计53957.603秒（14.9882小时）。时间包含各进程的数据准备、训练、内部validation、checkpoint写入和导出；GIFT两个组件已经计入其合计，不再加内部timer。U-NO/U-Net仅监督20/4步，其他方法使用各自原生loss和目标；N50的更新更少。因此该表描述固定配方成本，不是统一计算预算的架构效率排名。
+The seven training processes total 53957.603 seconds (14.9882 hours). Times include each process's data preparation, training, internal validation, checkpoint writes and export; GIFT's two components are already included in its total, without adding internal timers again. U-NO/U-Net supervise only 20/4 steps, other methods use their own native losses and objectives, and N50 has fewer updates. The table therefore describes costs of fixed recipes rather than architecture-efficiency rankings under a unified compute budget.
 
-| 测量范围 | 进程墙钟（秒） | 分钟 |
+| Measurement scope | Process wall-clock (seconds) | Minutes |
 | --- | ---: | ---: |
-| U-NO/U-Net/GIFT-Lite的两人口W1推理，以及七方法评分与作图 | 448.829 | 7.48 |
-| N96/N128配对确认真值生成 | 774.489 | 12.91 |
-| 六方法两人口W2原生推理、评分与图 | 2826.245 | 47.10 |
+| W1 inference for U-NO/U-Net/GIFT-Lite on two populations, plus scoring and plotting for seven methods | 448.829 | 7.48 |
+| Paired N96/N128 confirmation-truth generation | 774.489 | 12.91 |
+| Native W2 inference, scoring and figures for six methods on two populations | 2826.245 | 47.10 |
 
-这些分项按声明的进程范围计时，不是全部W1/W2训练与评价的统一端到端时间。W2 N64指标来自对应W1预测的一秒前缀，不重复计预测时间；FNO-3D高网格完整输出75个未来token后评价前25点，所以其计算不限于25时间token。进程中的推理、验证和作图子计时不再重复相加。环境安装、来源获取及文档操作不计入模型训练时间。
+These components time their declared process scopes rather than a unified end-to-end workflow for all W1/W2 training and evaluation. W2 N64 metrics use the one-second prefix of corresponding W1 predictions without counting prediction time again; high-grid FNO-3D outputs all 75 future tokens before evaluating the first 25, so computation is not limited to 25 time tokens. Inference, validation and plotting subtimers within a process are not added again. Environment installation, source acquisition and documentation work are excluded from model-training time.
 
-成本来源为 `source-record:9b0778b4fa631783ad24`（SHA-256 `133fbb3022e0dbe3056d335360f0e78b03df3d990cbfb5a80232c67ec5ca6876`）与 `source-record:34daf08966d3f15edc14`（`d3607da57ec27cc6a51270060c5157d92694c5980d561e8ceb93de5477930787`）。ANIE训练成本来自 `source-record:0458d853302dcbaf7140`（SHA-256 `41aff903c363426402e2ebaa8e64acdc5358d95223c8be7421c55f3e3fa7d4b7`）。其他方法成本范围记录在原目录的 `FINAL_COST_CLOSURE.json`；CPU图像导出等操作另有 `CPU_EXECUTION_EVENTS.jsonl` 记录，不混入上述训练计时。机器为RTX A5500 Laptop GPU；浮点和随机算子不保证跨设备逐位一致。
+Cost sources are `source-record:9b0778b4fa631783ad24` (SHA-256 `133fbb3022e0dbe3056d335360f0e78b03df3d990cbfb5a80232c67ec5ca6876`) and `source-record:34daf08966d3f15edc14` (`d3607da57ec27cc6a51270060c5157d92694c5980d561e8ceb93de5477930787`). ANIE training cost comes from `source-record:0458d853302dcbaf7140` (SHA-256 `41aff903c363426402e2ebaa8e64acdc5358d95223c8be7421c55f3e3fa7d4b7`). Other methods' cost scopes are recorded in `FINAL_COST_CLOSURE.json` in their original directories; CPU figure export and similar operations have separate `CPU_EXECUTION_EVENTS.jsonl` records and are excluded from these training timings. Hardware is RTX A5500 Laptop GPU; floating-point and random operators are not guaranteed bitwise-identical across devices.
 
-## W3 无噪声50组参数识别实测成本
+## Measured W3 costs for 50 noise-free parameter combinations
 
-每种方法各完成50个参数case。下表为FINAL_COST_CLOSURE中的方法级worker墙钟合计及单槽均值；两机并行执行，累计worker时间不能解释为日历运行时长，也不是等计算预算效率排名。训练、回归、参数读出和辅助阶段分别记录；表中仅累计已完整计时的worker墙钟，中断尝试另报区间。
+Each method completed 50 parameter cases. The table reports method-level worker wall-clock totals and per-slot means from FINAL_COST_CLOSURE. Two hosts ran in parallel, so accumulated worker time is neither calendar runtime nor an equal-compute efficiency ranking. Training, regression, parameter readout and auxiliary phases are recorded separately; only fully timed worker wall clocks are accumulated here, while interrupted attempts have separately reported intervals.
 
-| 方法 | 50槽累计worker墙钟 | 单槽均值 |
+| Method | Total worker wall-clock for 50 slots | Per-slot mean |
 |---|---:|---:|
-| GIFT | 5,313.126 秒（1.48 小时） | 106.263 秒 |
-| PDE-FIND | 12,552.202 秒（3.49 小时） | 251.044 秒 |
-| PDE-FIND-KC | 160.025 秒（0.04 小时） | 3.200 秒 |
-| PINN-SR | 409,616.955 秒（113.78 小时） | 8,192.339 秒 |
-| PINN-SR-KC | 285,430.598 秒（79.29 小时） | 5,708.612 秒 |
+| GIFT | 5,313.126 seconds (1.48 hours) | 106.263 seconds |
+| PDE-FIND | 12,552.202 seconds (3.49 hours) | 251.044 seconds |
+| PDE-FIND-KC | 160.025 seconds (0.04 hours) | 3.200 seconds |
+| PINN-SR | 409,616.955 seconds (113.78 hours) | 8,192.339 seconds |
+| PINN-SR-KC | 285,430.598 seconds (79.29 hours) | 5,708.612 seconds |
 
 
-两台主机worker墙钟合计：host_A 350,335.529秒，host_B 362,737.377秒；跨机合计 713,072.906秒（198.08小时）。并行与调度使此数值不等于实验经历的日历时长。采样准备等辅助事件合计 278.298秒；这些准备事件不计入模型训练成本。
+Host worker wall-clock totals are host_A 350,335.529 seconds and host_B 362,737.377 seconds; combined total 713,072.906 seconds (198.08 hours). Parallelism and scheduling mean this differs from elapsed calendar runtime. Auxiliary events such as sampling preparation total 278.298 seconds and are excluded from model-training costs.
 
-参数041的PINN-SR运行经历一次基础设施中断，随后从该槽自身检查点继续，未创建第二个科学槽、未重抽seed。中断尝试按证据计为 800.370–36924.215秒区间；具体区间与完整尝试清单见[成本闭合](../results/formal/W3_single_trajectory_20261010/summary/FINAL_COST_CLOSURE.json)。所有250个科学实例均完成；中断尝试只能报告上述区间，不能将它或包含它的总成本写成精确值。
+The PINN-SR run for parameter041 experienced one infrastructure interruption and then continued from that slot's own checkpoint, without creating another scientific slot or resampling a seed. Evidence bounds the interrupted attempt at 800.370–36924.215 seconds; see [cost closure](../results/formal/W3_single_trajectory_20261010/summary/FINAL_COST_CLOSURE.json) for the interval and complete attempt list. All 250 scientific instances completed; only this interval can be reported for the interrupted attempt, and neither it nor totals including it can be stated as exact values.
 
-锁定预算和真实计时边界见[W3协议](W3_PROTOCOL.md)、[逐例成本清单](../results/formal/W3_single_trajectory_20261010/summary/)与run审计。不同方法的目标、系数库、优化过程与实现环境不同，不能根据单一墙钟汇总宣称统一效率比较。
+Locked budgets and actual timing boundaries appear in the [W3 protocol](W3_PROTOCOL.md), [per-case cost manifests](../results/formal/W3_single_trajectory_20261010/summary/) and run audits. Method objectives, coefficient libraries, optimization procedures and implementation environments differ, so a single wall-clock summary cannot establish a unified efficiency comparison.
 
 
-## Independent N1000 engine policy / 独立N1000执行策略
+## Independent N1000 engine policy
 
 The N1000 GIFT entry points in `scripts.run_training` use the shared `auto` execution policy. Fresh
 GPU training uses `cuda-graph` to replay the same tensor operations with less
@@ -54,12 +54,12 @@ CPU dispatch overhead; CPU uses `eager`. `--execution eager` selects the explici
 reference training path. Prediction remains eager by default. No extra package
 is needed. CPU training uses the same model and declared budget with eager execution.
 
-N1000协议的 `scripts.run_training` GIFT入口共用 `auto` 执行策略：GPU 新训练默认使用 `cuda-graph`，
-CPU 使用 `eager`；`--execution eager` 可明确选择参考训练路径。预测默认路径不变。
-优化不改变模型、训练数据量、epoch 数、批大小、
-AdamW、学习率日程、损失、RK4 步长或递归截断位置，也不启用混合精度。
+The N1000 `scripts.run_training` GIFT entry points share an `auto` execution policy: new GPU training defaults to `cuda-graph`,
+while CPU uses `eager`; `--execution eager` explicitly selects the reference training path. Prediction defaults remain unchanged.
+The optimization preserves models, training-data volumes, epoch counts, batch sizes,
+AdamW, learning-rate schedules, losses, RK4 steps and recursion truncation positions, without enabling mixed precision.
 
-## Use / 使用
+## Use
 
 Full-data GIFT and reduced-data GIFT-Lite use the same training engine. Each
 model still has its own command, scientific schedule and complete-state journal:
@@ -77,11 +77,11 @@ Graphs are rebuilt; no CUDA graph or device address is serialized. Source and
 environment records describe the run rather than prevent code maintenance.
 Actual model, data and schedule compatibility is checked before continuing.
 
-断点恢复使用原输出目录。`gift_low`、
-`gift_generator` 和 `gift_predictor` 将 `--run-training` 替换为 `--resume`；
-`gift_branch` 则保留 `--run-training`，另加 `--resume`。
-执行图在恢复后重建，不保存设备内存地址。源码和环境变化不阻止兼容状态的恢复，
-运行设置如实记录。首次图构建计入训练 epoch 耗时。
+Checkpoint recovery uses the original output directory. For `gift_low`,
+`gift_generator` and `gift_predictor`, replace `--run-training` with `--resume`;
+for `gift_branch`, retain `--run-training` and add `--resume`.
+Execution graphs are rebuilt after recovery without saving device memory addresses. Source and environment changes do not prevent recovery of compatible states;
+actual runtime settings are recorded. Initial graph construction counts toward training-epoch time.
 
 The reduced-data branch command retains `--run-training` when adding `--resume`.
 The clean/noisy reduced-data generator keeps its best-validation phase selection,
@@ -106,7 +106,7 @@ Reported RHS counts describe the simulated RK4 steps. Graph warmups are extra
 discarded evaluations, not additional simulated steps or optimizer updates;
 their time is included in graph setup and total elapsed time.
 
-## Measurements / 实测
+## Measurements
 
 Hardware: RTX A5500 Laptop GPU (16 GiB), Intel i9-12950HX, Windows,
 PyTorch 2.10.0 + CUDA 12.6; 16 Torch CPU threads. Original float32/complex64
@@ -125,12 +125,12 @@ device copies, forward/backward, clipping, AdamW and scalar loss reporting.
 It excludes initial graph setup, data preparation, validation and affine refits.
 These are component benchmarks, **not completed 500-epoch training times**.
 
-| Stage / 阶段 | Eager median / 中位秒数 | Graph median / 中位秒数 | Speedup / 加速比 |
+| Stage | Eager median (seconds) | Graph median (seconds) | Speedup |
 | --- | ---: | ---: | ---: |
-| Generator gradient training / 生成元梯度训练 | 0.0759 | 0.0273 | 2.78× |
-| Branch derivative training / 支路导数训练 | 0.0575 | 0.0338 | 1.70× |
-| Branch short recursion / 支路短递归训练 | 6.1704 | 1.3059 | 4.73× |
-| Branch long recursion / 支路长递归训练 | 31.5045 | 6.4316 | 4.90× |
+| Generator gradient training | 0.0759 | 0.0273 | 2.78× |
+| Branch derivative training | 0.0575 | 0.0338 | 1.70× |
+| Branch short recursion | 6.1704 | 1.3059 | 4.73× |
+| Branch long recursion | 31.5045 | 6.4316 | 4.90× |
 
 Graph setup, including two warmups, took approximately 0.23, 0.32, 1.42 and
 6.30 seconds respectively for the measured batch shapes. Results depend on
@@ -168,7 +168,7 @@ run of seed 20260820 matched the first run's selected parameters, optimizer,
 scheduler, RNG and numerical history bitwise, excluding elapsed-time fields.
 The repeat is a reproducibility check, not a fourth statistical seed.
 
-## What is optimized / 优化范围
+## What is optimized
 
 - Cache only constant frequency grids, masks and table indices. Learned
   generator tables and branch coefficient fields are recomputed after updates.
@@ -199,11 +199,11 @@ derivative construction, affine-fit precision and checkpoint durability are not
 weakened for speed. Increasing batch size, reducing RK4 stages, enabling lower
 precision or rewriting external algorithms is deliberately outside this backend.
 
-训练专用布局不减少 RK4 步数、支路调用或反向段数。长递归一批仍包含 50 个 RK4
-时间步、200 次支路前向和 5 段反向。尾批不填充、不丢弃，使用原图执行路径。
-布局副本由普通自动微分连接到原参数；不分离权重，不实现自定义反向算子。
+Training-specific layouts do not reduce RK4 steps, branch calls or backward segments. A long-recursion batch still contains 50 RK4
+time steps, 200 branch forward calls and 5 backward segments. Final partial batches are neither padded nor dropped and use the original graph execution path.
+Layout copies connect to original parameters through ordinary autodifferentiation, without detaching weights or implementing custom backward operators.
 
-## Reproduce timing / 重做计时
+## Reproduce timing
 
 Use the same configured environment and explicitly selected model files:
 

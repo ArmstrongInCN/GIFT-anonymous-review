@@ -1,18 +1,18 @@
-# ANIE：时空坐标与状态token对应
+# ANIE: alignment of spatiotemporal coordinates and state tokens
 
-ANIE使用作者公开仓库 `emazap7/ANIE`，固定提交 `2071ad709b260a6c305450affcf7168fd825f692`，source profile为 `aligned_ns_single_v1`、condition为 `native`。官方源码与适配接口均位于 GIFT 仓库外。本机既有外部接口从只读官方 checkout 加载并实施已声明操作；GIFT 只提供[文字操作说明](EXTERNAL_MANUAL_ADAPTATION.md)和来源元数据，不包含实现或可执行补丁。
+ANIE uses the authors' public repository `emazap7/ANIE`, pinned to commit `2071ad709b260a6c305450affcf7168fd825f692`, with source profile `aligned_ns_single_v1` and condition `native`. Both the official source and the adaptation interfaces reside outside the GIFT repository. The existing external interface on the experiment machine loads a read-only official checkout and applies the declared operations; GIFT provides only [written instructions](EXTERNAL_MANUAL_ADAPTATION.md) and source metadata, without implementations or executable patches.
 
-状态张量按空间优先、时间次优顺序展平。空间索引s、时间索引j对应token `k=s*T+j`；token的状态特征、空间坐标和时间坐标均使用该索引。求解器内部各次更新保持同一排列，解码前按其逆排列还原。训练、validation和W1推理采用同一配置。
+State tensors are flattened in space-major, time-minor order. Spatial index s and time index j correspond to token `k=s*T+j`; the token's state features, spatial coordinates and time coordinates all use this index. Every internal solver update retains the same ordering, and the inverse permutation restores the original layout before decoding. Training, validation and W1 inference use the same configuration.
 
-| 项目文件或仓库外接口 | 调整及必要性 |
+| Project file or external interface | Adjustment and rationale |
 | --- | --- |
-| `仓库外接口 adapters/anie_config.py` | 允许并验证独立 `aligned_ns_single_v1` 配置；它采用native条件路径，训练控制来源沿用官方NS实现。 |
-| 仓库外执行锁；GIFT内`anie_sources.json`为文字元数据 | 记录 `spatial_time_token_alignment` 与 `linear_attention_eval_dropout_mode` 两个操作标识；原配置及checkpoint读取行为保持绑定，执行文本只存于仓库外。 |
-| `仓库外接口 adapters/anie.py` | 仓库外接口将空间和时间坐标与状态统一排列；操作见手工适配说明，原架构、注意力、积分迭代和输出解码保持。 |
-| `training/w1_single_train.py` | 按声明profile构造原网络；全76点物理MSE、optimizer/scheduler、同次validation-MSE-best及原早停规则由固定训练配置确定。 |
+| External interface `adapters/anie_config.py` | Allows and validates the separate `aligned_ns_single_v1` configuration; it uses the native conditioning path and retains training control from the official NS implementation. |
+| External execution lock; `anie_sources.json` in GIFT contains textual metadata | Records the operation identifiers `spatial_time_token_alignment` and `linear_attention_eval_dropout_mode`; the original configuration and checkpoint-loading behavior remain bound, and executable text is stored only outside the repository. |
+| External interface `adapters/anie.py` | The external interface orders spatial and temporal coordinates consistently with the state; see the manual adaptation instructions. The original architecture, attention, integration iterations and output decoding are retained. |
+| `training/w1_single_train.py` | Constructs the original network under the declared profile; the fixed training configuration determines physical MSE over all 76 points, the optimizer/scheduler, validation-MSE-best selection within the same run and the original early-stopping rule. |
 
-已登记的functional attention dropout调整在训练时保留原概率，在evaluation时关闭，与模块training状态一致。未增加归一化、空间decoder修改、初态硬锚定、辅助重建或递归机制。
+The registered functional attention dropout adjustment retains the original probability during training and disables dropout during evaluation, consistently with the module's training state. No normalization, spatial decoder changes, hard anchoring of the initial state, auxiliary reconstruction or recursion mechanisms are added.
 
-训练数据为共同N300名单和20条validation，t5–8每0.04秒共76点。输入仅为每条轨迹t5真场；NS训练和评价均使用c=0/y_init条件路径。seed7，effective batch32、micro6，Adam lr1e-4/wd1e-4，延迟CosineT101，eta_min1e-9，上限5000轮、patience1000。实际完成1029轮、10290次更新，选择第29轮；训练进程墙钟21176.742秒。
+Training uses the common N300 list and 20 validation trajectories, with 76 points at 0.04-second intervals over t5–8. The input is only each trajectory's true t5 field; NS training and evaluation both use the c=0/y_init conditioning path. The settings are seed7, effective batch32, micro6, Adam lr1e-4/wd1e-4, delayed CosineT101, eta_min1e-9, a 5000-epoch cap and patience1000. The run completed 1029 epochs and 10290 updates and selected epoch29; training-process wall-clock time was 21176.742 seconds.
 
-当前可加载权重：`prediction_aligned/training/anie_ns_seed7/best.pt`，SHA-256 `3adbe09b412c1a3a214ac06bebde51079298018799b80a685d8cfde4f93abb35`。当前权重的数值状态与原测量相同，原测量权重文件SHA保留在科学结果清单。训练历史及raw来源由仓库外来源登记保留。W1两人口各180条单列，主指标排除已知初态，只取future75。ANIE不参加W2。该实验描述固定配方在本任务的表现，不作为原论文数据与全部设置的完整复现。
+The currently loadable weights are `prediction_aligned/training/anie_ns_seed7/best.pt`, SHA-256 `3adbe09b412c1a3a214ac06bebde51079298018799b80a685d8cfde4f93abb35`. Their numerical state matches the original measurement, whose weight-file SHA remains in the scientific result manifests. The external provenance registry retains training history and raw-data provenance. The two W1 populations, each with 180 trajectories, are reported separately; the primary metric excludes the known initial state and uses future75 only. ANIE does not participate in W2. This experiment describes the fixed recipe's performance on this task and is not a complete reproduction of the original paper's data and all its settings.
